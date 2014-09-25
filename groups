@@ -1,4 +1,4 @@
 # UUID                                  	Group Name
 #
-1a602da9f766f4d3d0827d2c49ed6c9b82ea04e9	GitHub Replication for gateway
+139102f0421fe2b600cbffd8e124a246f244414c	GitHub Replication
 ldap:cn=gateway_agent,ou=groups,cn=allseen,dc=codeaurora,dc=org	ldap/gateway_agent
