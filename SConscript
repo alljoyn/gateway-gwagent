@@ -44,4 +44,3 @@ for b in gateway_env['bindings']:
 
 gateway_env.SConscript(['$OBJDIR/%s/SConscript' % b for b in env['bindings'] if os.path.exists('%s/SConscript' % b) ],
                       exports = ['gateway_env'])
-

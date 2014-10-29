@@ -13,7 +13,8 @@
 #    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 import os
-
+#If --pmcl option is not selected then the Package Manager Gtest application will be built
+AddOption('--pmcl', dest = 'pmcl', action = 'store_true', default=False, help = 'Build Package Manager Command Line App')
 env = SConscript('../../core/alljoyn/build_core/SConscript')
 
 vars = Variables()
