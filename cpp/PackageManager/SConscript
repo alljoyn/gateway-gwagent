@@ -1,4 +1,4 @@
-# Copyright (c) 2013-2014, AllSeen Alliance. All rights reserved.
+# Copyright (c) 2014, AllSeen Alliance. All rights reserved.
 #
 #    Permission to use, copy, modify, and/or distribute this software for any
 #    purpose with or without fee is hereby granted, provided that the above
@@ -13,19 +13,20 @@
 #    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 Import('gateway_env')
- 
-if not gateway_env.has_key('_ALLJOYNCORE_'):
-    gateway_env.Append(LIBS = ['alljoyn'])
-    if gateway_env['OS'] == 'openwrt':
-        gateway_env.AppendUnique(LIBS = [ 'stdc++', 'pthread' ])
-    if gateway_env['OS'] == 'linux':
-        gateway_env.AppendUnique(LIBS = [ 'pthread' ])
 
-gateway_dirs = [
-    'GatewayMgmtApp',
-    'GatewayConnector',
-    'GatewayController',
-    'PackageManager'
-]
+import os
 
-result = [ gateway_env.SConscript('%s/SConscript' % gatewaydir, exports = ['gateway_env']) for gatewaydir in gateway_dirs ]
+gateway_env['PM_DISTDIR'] = gateway_env['DISTDIR'] + '/packageManager'
+
+gateway_env.Append(CPPPATH = '/inc');
+gateway_env.Append(CPPPATH = '/src');
+gateway_env.Append(LIBPATH = '$PM_DISTDIR/lib');
+gateway_env.Append(CPPPATH = '$PM_DISTDIR/inc');
+
+gateway_env.Install('$PM_DISTDIR/inc/alljoyn/gateway', gateway_env.Glob('inc/alljoyn/gateway/*.h'))
+gateway_env.Install('$PM_DISTDIR/bin', gateway_env.SConscript('src/SConscript', exports = ['gateway_env']))
+
+if not GetOption('pmcl') :
+		gateway_env.Install('$PM_DISTDIR/bin/testObjects', gateway_env.Glob('testObjects/*'))
+
+

@@ -38,10 +38,13 @@ if 'java' in env['bindings'] and not env.has_key('_ALLJOYN_JAVA_') and os.path.e
 
 gateway_env = env.Clone()
 
+if gateway_env['VARIANT'] == 'debug':
+    print("DEFINED NO_SSL_VERIFY")
+    gateway_env.Append(CXXFLAGS = '$CXXFLAGS -DNO_SSL_VERIFY')
+
 for b in gateway_env['bindings']:
     if os.path.exists('%s/SConscript' % b):
         gateway_env.VariantDir('$OBJDIR/%s' % b, b, duplicate = 0)
 
 gateway_env.SConscript(['$OBJDIR/%s/SConscript' % b for b in env['bindings'] if os.path.exists('%s/SConscript' % b) ],
                       exports = ['gateway_env'])
-
