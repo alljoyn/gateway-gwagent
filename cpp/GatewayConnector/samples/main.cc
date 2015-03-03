@@ -25,6 +25,7 @@
 #include <alljoyn/PasswordManager.h>
 #include <alljoyn/about/AnnounceHandler.h>
 #include <alljoyn/about/AnnouncementRegistrar.h>
+#include <alljoyn/about/AboutPropertyStoreImpl.h>
 #include <alljoyn/config/ConfigClient.h>
 #include <alljoyn/services_common/GuidUtil.h>
 
@@ -484,23 +485,24 @@ int main(int argc, char** argv) {
     qcc::String appid;
     GuidUtil::GetInstance()->GenerateGUID(&appid);
 
-    AboutPropertyStoreImpl propStore;
+    AboutData aboutData("en");
+    AboutObj aboutObj(*bus, BusObject::ANNOUNCED);
     DeviceNamesType deviceNames;
     deviceNames.insert(pair<qcc::String, qcc::String>("en", "ConnectorSampleDevice"));
-    status = CommonSampleUtil::fillPropertyStore(&propStore, appid, "ConnectorSample", deviceid, deviceNames);
+    status = CommonSampleUtil::fillAboutData(&aboutData, appid, "ConnectorSample", deviceid, deviceNames);
     if (status != ER_OK) {
-        cout << "Could not fill PropertyStore. " <<  QCC_StatusText(status) << endl;
+        cout << "Could not fill AboutData. " <<  QCC_StatusText(status) << endl;
         cleanup();
         return 1;
     }
     busListener = new CommonBusListener();
-    status = CommonSampleUtil::prepareAboutService(bus, &propStore, busListener, 900);
+    status = CommonSampleUtil::prepareAboutService(bus, &aboutData, &aboutObj, busListener, 900);
     if (status != ER_OK) {
         cout << "Could not set up the AboutService." << endl;
         cleanup();
         return 1;
     }
-    notificationSender = notificationService->initSend(bus, &propStore);
+    notificationSender = notificationService->initSend(bus, &aboutData);
     if (!notificationSender) {
         cout << "Could not initialize Sender" << endl;
         cleanup();
