@@ -332,7 +332,7 @@ QStatus GatewayRouterPolicyManager::writeDefaultPolicies()
     if (rc < 0) {
         goto exit;
     }
-    rc = xmlSaveFormatFile((GATEWAY_POLICIES_DIRECTORY + "/defaultConfig.xml").c_str(), doc, 1);
+    rc = xmlSaveFormatFile((GATEWAY_POLICIES_DIRECTORY + "/gwagent-config.xml").c_str(), doc, 1);
     if (rc < 0) {
         status = ER_WRITE_ERROR;
         goto exit;
