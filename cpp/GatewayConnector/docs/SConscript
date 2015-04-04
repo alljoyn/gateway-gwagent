@@ -1,6 +1,4 @@
-#!/bin/sh /etc/rc.common
-
-# Copyright (c) 2014, AllSeen Alliance. All rights reserved.
+# Copyright (c) 2013-2014, AllSeen Alliance. All rights reserved.
 #
 #    Permission to use, copy, modify, and/or distribute this software for any
 #    purpose with or without fee is hereby granted, provided that the above
@@ -13,21 +11,19 @@
 #    WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 #    ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 #    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-#
 
-START=75
-SERVICE_DAEMONIZE=1
-SERVICE_WRITE_PID=1
-SERVICE_SIG_STOP="INT"
+import os
+Import('gateway_env')
 
-boot() {
-	start
-}
+docgateway_env = gateway_env.Clone()
+docgateway_env['ENV']['GWCNC_DISTDIR'] = str(gateway_env.Dir('$GWCNC_DISTDIR'))
 
-start() {
-	service_start /opt/alljoyn/gw-mgmt/GatewayMgmtApp 
-}
+installedDocs = []
 
-stop() {
-	service_stop /opt/alljoyn/gw-mgmt/GatewayMgmtApp
-}
+# Build docs
+if docgateway_env['DOCS'] == 'html':
+    installedDocs = docgateway_env.Doxygen(source=['Doxygen_html'])
+    
+docgateway_env.Alias('gwcnc_docs', installedDocs)
+
+Return('installedDocs')

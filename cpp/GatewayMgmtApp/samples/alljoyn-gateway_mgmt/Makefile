@@ -22,16 +22,21 @@ PKG_NAME:=alljoyn-$(AJ_SERVICE)
 PKG_VERSION:=0.0.1
 PKG_RELEASE:=1
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)-src
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-src.tgz
-PKG_SOURCE_URL:=
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-src.tar.gz
+PKG_SOURCE_URL:=https://allseenalliance.org/releases/alljoyn/$(PKG_VERSION)/
 PKG_MD5SUM:=
+
+PKG_CONFIG_DEPENDS:= CONFIG_PACKAGE_$(PKG_NAME)-samples
 
 # SCons supports parallel builds but does not support make's jobserver
 PKG_BUILD_PARALLEL:=$(if $(CONFIG_PKG_BUILD_USE_JOBSERVER),0,1)
 
-PKG_CONFIG_DEPENDS:= CONFIG_PACKAGE_$(PKG_NAME)-samples
-
 include $(INCLUDE_DIR)/package.mk
+
+ifneq ($(CONFIG_CCACHE),)
+  TARGET_CC=$(TARGET_CC_NOCACHE)
+  TARGET_CXX=$(TARGET_CXX_NOCACHE)
+endif
 
 ALLJOYN_BINDINGS:=cpp,
 
@@ -40,10 +45,10 @@ define Package/$(PKG_NAME)
   SECTION:=net
   CATEGORY:=Network
   DEPENDS:=alljoyn \
-	+alljoyn-about \
-	+alljoyn-config \
-	+alljoyn-services_common \
-	+alljoyn-notification \
+    +alljoyn-about \
+    +alljoyn-config \
+    +alljoyn-services_common \
+    +alljoyn-notification \
     +libxml2 \
     +shadow-useradd \
     +shadow-userdel
@@ -56,7 +61,6 @@ define Package/$(PKG_NAME)/description
 AllJoyn $(AJ_SERVICE_NAME)
 endef
 
-
 define Package/$(PKG_NAME)-samples
 $(call Package/$(PKG_NAME))
   TITLE+=- Gateway Connector App testing sample
@@ -68,13 +72,11 @@ define Package/$(PKG_NAME)-samples/description
 Alljoyn $(AJ_SERVICE_NAME) Connector App testing sample. 
 endef
 
-
 ifeq ($(CONFIG_DEBUG),y)
   ALLJOYN_BUILD_VARIANT:=debug
 else
   ALLJOYN_BUILD_VARIANT:=release
 endif
-
 
 PKG_INSTALL_DIR:=$(PKG_BUILD_DIR)/gateway/$(AJ_SERVICE)/build/openwrt/openwrt/$(ALLJOYN_BUILD_VARIANT)/dist/gatewayMgmtApp
 SAMPLE_PKG_INSTALL_DIR:=$(PKG_BUILD_DIR)/gateway/$(AJ_SERVICE)/build/openwrt/openwrt/$(ALLJOYN_BUILD_VARIANT)/dist/gatewayConnector
@@ -114,28 +116,39 @@ endef
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include/alljoyn/gateway
 	$(CP) $(PKG_INSTALL_DIR)/inc/alljoyn/gateway/*.h $(1)/usr/include/alljoyn/gateway
+	$(CP) $(PKG_INSTALL_DIR)/../gatewayConnector/inc/alljoyn/gateway/*.h $(1)/usr/include/alljoyn/gateway
+	$(CP) $(PKG_INSTALL_DIR)/../gatewayController/inc/alljoyn/gateway/*.h $(1)/usr/include/alljoyn/gateway
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(CP) $(PKG_INSTALL_DIR)/../gatewayController/lib/liballjoyn_gateway.a $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/../gatewayController/lib/liballjoyn_gateway.so $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/../gatewayConnector/lib/liballjoyn_gwconnector.a $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/../gatewayConnector/lib/liballjoyn_gwconnector.so $(1)/usr/lib/
 endef
 
-
 define Package/$(PKG_NAME)/install
+	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_DIR) $(1)/opt
 	$(INSTALL_DIR) $(1)/opt/alljoyn
 	$(INSTALL_DIR) $(1)/opt/alljoyn/alljoyn-daemon.d
 	$(INSTALL_DIR) $(1)/opt/alljoyn/alljoyn-daemon.d/apps
 	$(INSTALL_DIR) $(1)/opt/alljoyn/app-manager
 	$(INSTALL_DIR) $(1)/opt/alljoyn/apps
-	$(INSTALL_DIR) $(1)/opt/alljoyn/gw-mgmt
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/bin/GatewayMgmtApp $(1)/opt/alljoyn/gw-mgmt
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/bin/manifest.xsd $(1)/opt/alljoyn/gw-mgmt
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/bin/installPackage.sh $(1)/opt/alljoyn/app-manager
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/bin/defaultConfig.xml $(1)/opt/alljoyn/alljoyn-daemon.d
+	$(INSTALL_DIR) $(1)/opt/alljoyn/gwagent
+	$(INSTALL_DIR) $(1)/etc
+	$(INSTALL_DIR) $(1)/etc/alljoyn
+	$(INSTALL_DIR) $(1)/etc/alljoyn/gwagent
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/bin/alljoyn-gwagent $(1)/usr/bin/
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/bin/manifest.xsd $(1)/opt/alljoyn/gwagent/
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/bin/gwagent-config.xml $(1)/etc/alljoyn/alljoyn-daemon.d/
 	$(INSTALL_DIR) $(1)/etc
 	$(INSTALL_DIR) $(1)/etc/init.d
-	$(INSTALL_BIN) ./files/gatewayMgmt.init $(1)/etc/init.d/gatewayMgmt
+	$(INSTALL_BIN) ./files/alljoyn-gwagent.init $(1)/etc/init.d/alljoyn-gwagent
 	$(INSTALL_DIR) $(1)/etc/uci-defaults
-	$(INSTALL_BIN) ./files/gatewayMgmt.defaults $(1)/etc/uci-defaults/gatewayMgmt
+	$(INSTALL_BIN) ./files/alljoyn-gwagent.defaults $(1)/etc/uci-defaults/alljoyn-gwagent
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(CP) $(PKG_INSTALL_DIR)/../gatewayController/lib/liballjoyn_gateway.so $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/../gatewayConnector/lib/liballjoyn_gwconnector.so $(1)/usr/lib/
 endef
-
 
 define Package/$(PKG_NAME)-samples/install
 	tar czf $(SAMPLE_PKG_INSTALL_DIR)/dummyApp1.tar.gz -C $(SAMPLE_PKG_INSTALL_DIR)/tar .
@@ -143,13 +156,14 @@ define Package/$(PKG_NAME)-samples/install
 	$(INSTALL_DIR) $(1)/opt/alljoyn
 	$(INSTALL_DIR) $(1)/opt/alljoyn/app-manager
 	$(INSTALL_BIN) $(SAMPLE_PKG_INSTALL_DIR)/dummyApp1.tar.gz $(1)/opt/alljoyn/app-manager/dummyApp1.tar.gz
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/bin/installPackage.sh $(1)/opt/alljoyn/app-manager/
 endef
 
 define Package/$(PKG_NAME)/postinst
 #!/bin/sh
 if [ -z "$${IPKG_INSTROOT}" ]; then
-    . /etc/uci-defaults/gatewayMgmt
-    rm -f /etc/uci-defaults/gatewayMgmt
+    . /etc/uci-defaults/alljoyn-gwagent
+    rm -f /etc/uci-defaults/alljoyn-gwagent
 fi
 exit 0
 endef
@@ -157,8 +171,8 @@ endef
 define Package/$(PKG_NAME)/prerm
 #!/bin/sh
 if [ -z "$${IPKG_INSTROOT}" ]; then
-    /etc/init.d/gatewayMgmt stop
-    /etc/init.d/gatewayMgmt disable
+    /etc/init.d/alljoyn-gwagent stop
+    /etc/init.d/alljoyn-gwagent disable
 fi
 exit 0
 endef

@@ -3,7 +3,7 @@ Import('gateway_env')
 
 gwcnc_env = gateway_env.Clone()
 gwcnc_env.Append(CPPPATH = gwcnc_env.Dir('$APP_COMMON_DIR/cpp/samples_common').srcnode())
-gwcnc_env.Prepend(LIBS = ['alljoyn_about', 'alljoyn_services_common', 'alljoyn_notification', 'alljoyn_config', 'alljoyn_gwConnector'])
+gwcnc_env.Prepend(LIBS = ['alljoyn_about', 'alljoyn_services_common', 'alljoyn_notification', 'alljoyn_config', 'alljoyn_gwconnector'])
 
 srcs = gwcnc_env.Glob('*.cc')
 objs = gwcnc_env.Object(srcs)
@@ -12,7 +12,7 @@ gwcnc_env.VariantDir('AppCommon', '$APP_COMMON_DIR/cpp/samples_common/', duplica
 cobjs = gwcnc_env.SConscript('AppCommon/SConscript', {'env': gwcnc_env})
 objs.extend(cobjs)
 
-prog = gwcnc_env.Program('GatewayConnectorSample', objs)
+prog = gwcnc_env.Program('alljoyn-gwconnectorsample', objs)
  
 # Prepare for building Tar
 gwcnc_env.Install('$GWCNC_DISTDIR/tar', gwcnc_env.Glob('Manifest.xml'))

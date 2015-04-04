@@ -78,35 +78,32 @@ popd
 # copy build products to staging directories
 
 # create directory structure
+mkdir -p $sdkStaging/usr/bin
+mkdir -p $sdkStaging/usr/lib
 mkdir -p $sdkStaging/alljoyn-daemon.d/apps
 mkdir -p $sdkStaging/apps
 mkdir -p $sdkStaging/app-manager
-mkdir -p $sdkStaging/gw-mgmt/lib
+mkdir -p $sdkStaging/gwagent
 mkdir -p $sdkStaging/daemon
 
 
-distDir=${GWAGENT_SRC_DIR}/build/linux/x86_64/${BUILD_VARIANT}/dist
+distDir=${GWAGENT_SRC_DIR}/build/linux/${CPU}/${BUILD_VARIANT}/dist
 
-# copy Gateway agent files to gw-mgmt directory
-cp $distDir/gatewayMgmtApp/bin/GatewayMgmtApp $sdkStaging/gw-mgmt
-cp $distDir/gatewayMgmtApp/bin/manifest.xsd $sdkStaging/gw-mgmt
-cp $distDir/cpp/lib/liballjoyn.so $sdkStaging/gw-mgmt/lib
-chmod a+x $sdkStaging/gw-mgmt/GatewayMgmtApp
+# install the gateway agent
+cp $distDir/gatewayMgmtApp/bin/alljoyn-gwagent $sdkStaging/usr/bin/
+cp $distDir/gatewayMgmtApp/bin/manifest.xsd $sdkStaging/gwagent/
 
-# copy the sample defaultConfig.xml file to the location where the gwagent will modify it
-cp $distDir/gatewayMgmtApp/bin/defaultConfig.xml $sdkStaging/alljoyn-daemon.d/
-
-# copy sample scripts to app-manager directory
+# install the sample connector
+cp $distDir/gatewayConnector/tar/lib/*.so $sdkStaging/usr/lib/
 cp $distDir/gatewayMgmtApp/bin/*.sh $sdkStaging/app-manager/
 chmod a+x $sdkStaging/app-manager/*.sh
 
-# copy routing node and lib to daemon directory
+# install the alljoyn daemon
 cp $distDir/cpp/bin/alljoyn-daemon $sdkStaging/daemon/
-cp $distDir/cpp/lib/liballjoyn.so $sdkStaging/daemon/
-chmod a+x $sdkStaging/daemon/alljoyn-daemon
+cp $distDir/cpp/lib/*.so $sdkStaging/daemon/
 
-# copy sample routing node config.xml to daemon directory
-cp ${GWAGENT_SRC_DIR}/cpp/GatewayMgmtApp/samples/config.xml $sdkStaging/daemon/
+cp ${GWAGENT_SRC_DIR}/cpp/GatewayMgmtApp/gwagent-config.xml $sdkStaging/alljoyn-daemon.d/
+cp ${GWAGENT_SRC_DIR}/cpp/GatewayMgmtApp/samples/config.xml $sdkStaging/alljoyn-daemon.d/
 
 chmod a+x $distDir/gatewayConnector/tar/bin/*.sh
 
