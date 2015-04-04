@@ -1,4 +1,6 @@
-# Copyright (c) 2013, AllSeen Alliance. All rights reserved.
+#!/bin/sh /etc/rc.common
+
+# Copyright (c) 2014, AllSeen Alliance. All rights reserved.
 #
 #    Permission to use, copy, modify, and/or distribute this software for any
 #    purpose with or without fee is hereby granted, provided that the above
@@ -11,17 +13,21 @@
 #    WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 #    ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 #    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+#
 
-Import('gateway_env')
+START=75
+SERVICE_DAEMONIZE=1
+SERVICE_WRITE_PID=1
+SERVICE_SIG_STOP="INT"
 
-gateway_env['GWC_DISTDIR'] = gateway_env['DISTDIR'] + '/gatewayController'
+boot() {
+	start
+}
 
-#gateway_env.Append(LIBPATH = '$GWC_DISTDIR/lib');
-gateway_env.Append(CPPPATH = '$GWC_DISTDIR/inc');
+start() {
+	service_start /usr/bin/alljoyn-gwagent
+}
 
-gateway_env.Install('$GWC_DISTDIR/inc/alljoyn/gateway', gateway_env.Glob('inc/alljoyn/gateway/*.h'))
-gateway_env.Install('$GWC_DISTDIR/lib', gateway_env.SConscript('src/SConscript', exports = ['gateway_env']))
-
-# Build docs
-installDocs = gateway_env.SConscript('docs/SConscript', exports = ['gateway_env'])
-gateway_env.Depends(installDocs, gateway_env.Glob('$GWC_DISTDIR/inc/alljoyn/gateway/*.h'));
+stop() {
+	service_stop /usr/bin/alljoyn-gwagent
+}
