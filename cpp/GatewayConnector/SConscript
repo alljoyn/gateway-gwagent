@@ -1,3 +1,4 @@
+#******************************************************************************
 # Copyright (c) 2013, AllSeen Alliance. All rights reserved.
 #
 #    Permission to use, copy, modify, and/or distribute this software for any
@@ -11,20 +12,22 @@
 #    WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 #    ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 #    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+#*****************************************************************************
 
 Import('gateway_env')
-import os
+gwcnc_env = gateway_env.Clone()
 
-gateway_env['GWCNC_DISTDIR'] = gateway_env['DISTDIR'] + '/gatewayConnector'
+srcs = gwcnc_env.Glob('*.cc')
 
-gateway_env.Append(LIBPATH = '$GWCNC_DISTDIR/lib');
-gateway_env.Append(CPPPATH = '$GWCNC_DISTDIR/inc');
+libs = []
 
-gateway_env.Install('$GWCNC_DISTDIR/inc/alljoyn/gateway', gateway_env.Glob('inc/alljoyn/gateway/*.h'))
-gateway_env.Install('$GWCNC_DISTDIR/lib', gateway_env.SConscript('src/SConscript', exports = ['gateway_env']))
-gateway_env.Install('$GWCNC_DISTDIR/bin', gateway_env.SConscript('samples/SConscript', exports = ['gateway_env']))
-    
-# Build docs
-installedDocs = gateway_env.SConscript('docs/SConscript', exports = ['gateway_env'])
-gateway_env.Depends(installedDocs, gateway_env.Glob('$GWCNC_DISTDIR/inc/alljoyn/gateway/*.h'));
+# Static library
+objs = gwcnc_env.Object(srcs)
+libs.append(gwcnc_env.StaticLibrary('alljoyn_gwconnector', objs))
 
+# Shared library
+if gwcnc_env.get('LIBTYPE', 'static') != 'static':
+    shobjs = gwcnc_env.SharedObject(srcs)
+    libs.append(gwcnc_env.SharedLibrary('alljoyn_gwconnector', shobjs))
+
+Return('libs')
