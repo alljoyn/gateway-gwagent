@@ -83,7 +83,7 @@ int main(int argc, char* argv[])
     String packageName;
     String version;
     String url;
-    unsigned int size;
+    unsigned int size(0);
     String uid;
     String fileUrl;
 
