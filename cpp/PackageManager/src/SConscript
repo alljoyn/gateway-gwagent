@@ -1,4 +1,4 @@
-# Copyright (c) 2013-2014, AllSeen Alliance. All rights reserved.
+# Copyright (c) 2013, AllSeen Alliance. All rights reserved.
 #
 #    Permission to use, copy, modify, and/or distribute this software for any
 #    purpose with or without fee is hereby granted, provided that the above
@@ -13,19 +13,25 @@
 #    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 Import('gateway_env')
- 
-if not gateway_env.has_key('_ALLJOYNCORE_'):
-    gateway_env.Append(LIBS = ['alljoyn'])
-    if gateway_env['OS'] == 'openwrt':
-        gateway_env.AppendUnique(LIBS = [ 'stdc++', 'pthread' ])
-    if gateway_env['OS'] == 'linux':
-        gateway_env.AppendUnique(LIBS = [ 'pthread' ])
+import os
 
-gateway_dirs = [
-    'GatewayMgmtApp',
-    'GatewayConnector',
-    'GatewayController',
-    'PackageManager'
-]
 
-result = [ gateway_env.SConscript('%s/SConscript' % gatewaydir, exports = ['gateway_env']) for gatewaydir in gateway_dirs ]
+#if gateway_env.has_key('GTEST_DIR'):
+#  programName = 'PackageManagerGtest'
+#  excluded = 'pmcl.cc'
+#  gateway_env.Append(LIBS = ['gtest'])
+#  gateway_env.Append(LIBS = ['gtest_main'])
+#else :  
+excluded = 'pmgtest.cc' 	
+programName = 'PackageManagerCL'
+
+srcs = gateway_env.Object([f for f in Glob('*.cc')
+    if excluded not in f.path])
+    
+print 'building PM version ' + programName	
+
+gateway_env.Append(LIBPATH =['/usr/lib'])
+gateway_env.Append(LIBS = ['curl'])
+
+prog = gateway_env.Program(programName, srcs )
+Return('prog')
