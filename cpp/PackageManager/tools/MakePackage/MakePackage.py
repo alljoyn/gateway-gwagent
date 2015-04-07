@@ -54,14 +54,14 @@ privateKey = raw_input('enter path to private key file of the signing certificat
 
 verify_file_exists(privateKey)
 
-sslcmd =  'openssl dgst -sha1 -sign ' + privateKey + ' -out ' + packageTar + '.sha1 ' + packageTar
+sslcmd =  'openssl dgst -sha256 -sign ' + privateKey + ' -out ' + packageTar + '.sha256 ' + packageTar
 print 'ssl command:' + sslcmd
 os.system(sslcmd) 
 
-verify_file_exists(packageTar + '.sha1')
+verify_file_exists(packageTar + '.sha256')
 
 #create the 'outer tar', i.e. the AJ format package suitable for downloading by the AJ package manager
-cmd = 'tar cf ' + packageName + '.tar ' + packageTar + ' ' + packageTar + '.sha1'
+cmd = 'tar cf ' + packageName + '.tar ' + packageTar + ' ' + packageTar + '.sha256'
 print cmd;
 os.system(cmd)
 

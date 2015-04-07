@@ -37,7 +37,7 @@ static const char* VERIFICATION_CERTIFICATE_LOCATION = "/usr/local/share/ca-cert
 #endif
 
 #ifdef PMUTILS_H_
-static const char* TEMP_DIR_PATH = "/tmp/aj";
+static const char* TEMP_DIR_PATH = "/tmp/aj-gwagent-pkgmanager";
 #endif
 
 #ifdef SSLDOWNLOADER_H_

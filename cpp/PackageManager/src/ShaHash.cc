@@ -124,7 +124,7 @@ QStatus ShaHash::ImportPublicPem(const String& pemfilepath)
 
 QStatus ShaHash::RsaVerify(uint8_t* sigbuffer, const unsigned int siglen)
 {
-    if (1 != RSA_verify(NID_sha1, md_value, SHA1_SIZE, sigbuffer, siglen, rsaPublicKey)) {
+    if (1 != RSA_verify(NID_sha256, md_value, SHA256_SIZE, sigbuffer, siglen, rsaPublicKey)) {
         QCC_LogError(ER_AUTH_FAIL, ("RSA authorization failed"));
         return ER_AUTH_FAIL;
     }
