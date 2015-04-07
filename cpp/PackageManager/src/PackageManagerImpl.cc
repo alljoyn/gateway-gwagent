@@ -5,8 +5,6 @@
  * defined in HLD 3.3.2
  */
 
-
-
 /******************************************************************************
  * Copyright (c) 2014, AllSeen Alliance. All rights reserved.
  *
@@ -72,7 +70,8 @@ void PackageManagerImpl::InstallApp(
     packageName = package_name;
     responseStatus = pmUtils.InitTempDir(appId);
     if (ER_OK != responseStatus) {
-        QCC_LogError(responseStatus, ("Unable create temporary directory for : %s ", package_name.c_str()));
+        QCC_LogError(responseStatus,
+                     ("Unable create temporary directory for : %s ", package_name.c_str()));
         return;
     }
 
@@ -80,7 +79,8 @@ void PackageManagerImpl::InstallApp(
     responseStatus = DownloadFile(downloadUrl, downloadLocation, false);  //Last argument is ignored in non-debug builds
 
     if (ER_OK != responseStatus) {
-        QCC_LogError(responseStatus, ("Unable to download package: %s  ", downloadLocation.c_str()));
+        QCC_LogError(responseStatus,
+                     ("Unable to download package: %s  ", downloadLocation.c_str()));
         return;
     }
 
@@ -89,7 +89,8 @@ void PackageManagerImpl::InstallApp(
         String cmd = "rm -rf " + appDir + "/";
         responseStatus = pmUtils.ExecuteCmdLine(cmd.c_str());
         if (ER_OK != responseStatus) {
-            QCC_LogError(responseStatus, ("Unable to remove package at: %s prior to update", appDir.c_str()));
+            QCC_LogError(responseStatus,
+                         ("Unable to remove package at: %s prior to update", appDir.c_str()));
             return;
         }
     } else {   //TODO: if PM is  not required create the application's user then this code should be deleted

@@ -16,14 +16,14 @@ Import('gateway_env')
 import os
 
 
-if gateway_env.has_key('GTEST_DIR'):
-  programName = 'PackageManagerGtest'
-  excluded = 'pmcl.cc'
-  gateway_env.Append(LIBS = ['gtest'])
-  gateway_env.Append(LIBS = ['gtest_main'])
-else :  
-  excluded = 'pmgtest.cc' 	
-  programName = 'PackageManagerCL'
+#if gateway_env.has_key('GTEST_DIR'):
+#  programName = 'PackageManagerGtest'
+#  excluded = 'pmcl.cc'
+#  gateway_env.Append(LIBS = ['gtest'])
+#  gateway_env.Append(LIBS = ['gtest_main'])
+#else :  
+excluded = 'pmgtest.cc' 	
+programName = 'PackageManagerCL'
 
 srcs = gateway_env.Object([f for f in Glob('*.cc')
     if excluded not in f.path])

@@ -41,7 +41,7 @@ class ShaHash {
      * ShaHash constructor initalizes the hash tools.
      * Note: currently only SHA1 is supported.
      */
-    ShaHash(const char* algorithm = "SHA1");  // TODO:  support SHA256
+    ShaHash(const char* algorithm = "SHA256");  // TODO:  support SHA256
     virtual ~ShaHash();
 
     /**
