@@ -114,6 +114,13 @@ endef
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include/alljoyn/gateway
 	$(CP) $(PKG_INSTALL_DIR)/inc/alljoyn/gateway/*.h $(1)/usr/include/alljoyn/gateway
+	$(CP) $(PKG_INSTALL_DIR)/../gatewayConnector/inc/alljoyn/gateway/*.h $(1)/usr/include/alljoyn/gateway
+	$(CP) $(PKG_INSTALL_DIR)/../gatewayController/inc/alljoyn/gateway/*.h $(1)/usr/include/alljoyn/gateway
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(CP) $(PKG_INSTALL_DIR)/../gatewayController/lib/liballjoyn_gateway.a $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/../gatewayController/lib/liballjoyn_gateway.so $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/../gatewayConnector/lib/liballjoyn_gwConnector.a $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/../gatewayConnector/lib/liballjoyn_gwConnector.so $(1)/usr/lib/
 endef
 
 
@@ -125,6 +132,9 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/opt/alljoyn/app-manager
 	$(INSTALL_DIR) $(1)/opt/alljoyn/apps
 	$(INSTALL_DIR) $(1)/opt/alljoyn/gw-mgmt
+	$(INSTALL_DIR) $(1)/etc
+	$(INSTALL_DIR) $(1)/etc/alljoyn
+	$(INSTALL_DIR) $(1)/etc/alljoyn/gwagent
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/bin/GatewayMgmtApp $(1)/opt/alljoyn/gw-mgmt
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/bin/manifest.xsd $(1)/opt/alljoyn/gw-mgmt
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/bin/installPackage.sh $(1)/opt/alljoyn/app-manager
@@ -134,6 +144,9 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_BIN) ./files/gatewayMgmt.init $(1)/etc/init.d/gatewayMgmt
 	$(INSTALL_DIR) $(1)/etc/uci-defaults
 	$(INSTALL_BIN) ./files/gatewayMgmt.defaults $(1)/etc/uci-defaults/gatewayMgmt
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(CP) $(PKG_INSTALL_DIR)/../gatewayController/lib/liballjoyn_gateway.so $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/../gatewayConnector/lib/liballjoyn_gwConnector.so $(1)/usr/lib/
 endef
 
 
