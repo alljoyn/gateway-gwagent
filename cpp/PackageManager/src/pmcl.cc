@@ -34,7 +34,7 @@ const string Usage()
 {
     stringstream usage;
     usage << "Packet Manager Usage:\n";
-    usage << "-pnamen";
+    usage << "-pname";
     usage << "[install | -uninstall | -upgrade]\n";
     usage << "-version\n";
     usage << "-url\n";
@@ -45,29 +45,29 @@ const string Usage()
     return usage.str();
 }
 
-const int APP_ID = 'a';
-const int PNAME = 'p';
-const int INSTALL = 'i';
-const int UPGRADE = 'u';
-const int UNINSTALL = 'r';
-const int VERSION = 'v';
-const int URL = 'l';
-const int SIZE = 's';
-const int UID = 'd';
-const int HELP = 'h';
+const int APP_ID =     'a';
+const int PNAME =      'p';
+const int INSTALL =    'i';
+const int UPGRADE =    'u';
+const int UNINSTALL =  'r';
+const int VERSION =    'v';
+const int URL =        'l';
+const int SIZE =       's';
+const int UID =        'd';
+const int HELP =       'h';
 
 
 static struct option long_options[] = {
-    { "appid",         required_argument,  0, APP_ID },
-    { "pname",       required_argument,     0,  PNAME },
-    { "install",      no_argument,           0,  INSTALL },
-    { "upgrade",      no_argument,         0,  UPGRADE },
-    { "uninstall",     no_argument,         0,  UNINSTALL },
-    { "version",      required_argument,     0,  VERSION },
-    { "url",         required_argument,     0,  URL },
-    { "size",         required_argument,     0,  SIZE },
-    { "uid",         required_argument,     0,  UID },
-    { "help",     no_argument,         0,  HELP },
+    { "appid",      required_argument,  0,  APP_ID    },
+    { "pname",      required_argument,  0,  PNAME     },
+    { "install",    no_argument,        0,  INSTALL   },
+    { "upgrade",    no_argument,        0,  UPGRADE   },
+    { "uninstall",  no_argument,        0,  UNINSTALL },
+    { "version",    required_argument,  0,  VERSION   },
+    { "url",        required_argument,  0,  URL       },
+    { "size",       required_argument,  0,  SIZE      },
+    { "uid",        required_argument,  0,  UID       },
+    { "help",       no_argument,        0,  HELP      },
     { 0, 0, 0, 0 }
 };
 
@@ -83,7 +83,7 @@ int main(int argc, char* argv[])
     String packageName;
     String version;
     String url;
-    unsigned int size;
+    unsigned int size(0);
     String uid;
     String fileUrl;
 
@@ -110,6 +110,7 @@ int main(int argc, char* argv[])
             break;
 
         case UPGRADE:
+            install = true;
             upgrade = true;
             if (install || uninstall) {
                 cout << "upgrade is incompatible with install or uninstall\n";
@@ -148,7 +149,7 @@ int main(int argc, char* argv[])
             break;
 
         case HELP:
-            cout << "help\n";
+            cout << Usage() << endl;
             break;
 
         default:
@@ -161,7 +162,6 @@ int main(int argc, char* argv[])
 
     PackageManager mgr;
     QStatus responseStatus(ER_FAIL);
-    cout << "number of arguments: " << argc << endl;
     if (install) {
         cout << "pmcl install mode\n";
         if (argc != 14) {

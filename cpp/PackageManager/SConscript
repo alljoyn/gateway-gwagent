@@ -23,10 +23,7 @@ gateway_env.Append(CPPPATH = '/src');
 gateway_env.Append(LIBPATH = '$PM_DISTDIR/lib');
 gateway_env.Append(CPPPATH = '$PM_DISTDIR/inc');
 
-gateway_env.Install('$PM_DISTDIR/inc/alljoyn/gateway', gateway_env.Glob('inc/alljoyn/gateway/*.h'))
 gateway_env.Install('$PM_DISTDIR/bin', gateway_env.SConscript('src/SConscript', exports = ['gateway_env']))
 
-#if env.has_key('GTEST_DIR'):
-#		gateway_env.Install('$PM_DISTDIR/bin/testObjects', gateway_env.Glob('testObjects/*'))
-
-
+if gateway_env.has_key('GTEST_DIR'):
+    gateway_env.Install('$PM_DISTDIR/bin/testObjects', gateway_env.Glob('testObjects/*'))

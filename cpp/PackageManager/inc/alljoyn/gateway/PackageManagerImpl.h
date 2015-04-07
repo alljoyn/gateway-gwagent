@@ -33,7 +33,7 @@ namespace gw {
 
 using namespace qcc;
 
-//todo: add doxygen comments
+//TODO: add doxygen comments
 
 class PackageManagerImpl {
   public:

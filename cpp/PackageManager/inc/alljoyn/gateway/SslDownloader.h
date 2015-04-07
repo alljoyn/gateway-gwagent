@@ -33,9 +33,7 @@ namespace gw {
 
 //todo:  does this class really need to be a singleton?
 class SslDownloader {
-  public:
-
-    ~SslDownloader();
+  public: ~SslDownloader();
 
     /**
      * static function to get an Instance of the SslDownloader class
