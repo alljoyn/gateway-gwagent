@@ -36,7 +36,11 @@ QStatus GatewayMergedAcl::unmarshal(Message& msg)
         return ER_BUS_UNEXPECTED_SIGNATURE;
     }
 
-    status = msg->GetArg(0)->Get("a(obas)", &numExposedServiceArgs, &exposedServiceArgs);
+    const MsgArg* msgArg0 = msg->GetArg(0);
+    if (NULL == msgArg0) {
+        return ER_BUS_UNEXPECTED_SIGNATURE;
+    }
+    status = msgArg0->Get("a(obas)", &numExposedServiceArgs, &exposedServiceArgs);
     if (ER_OK != status) {
         return status;
     }
@@ -48,7 +52,11 @@ QStatus GatewayMergedAcl::unmarshal(Message& msg)
     //remoted apps
     MsgArg* remotedAppArgs;
     size_t numRemotedAppArgs;
-    status = msg->GetArg(1)->Get("a(saya(obas))", &numRemotedAppArgs, &remotedAppArgs);
+    const MsgArg* msgArg1 = msg->GetArg(1);
+    if (NULL == msgArg1) {
+        return ER_BUS_UNEXPECTED_SIGNATURE;
+    }
+    status = msgArg1->Get("a(saya(obas))", &numRemotedAppArgs, &remotedAppArgs);
     if (ER_OK != status) {
         return status;
     }
