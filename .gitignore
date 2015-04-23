@@ -14,7 +14,6 @@ libs
 QA
 ajlite.nvram
 alljoyn-daemon
-bin
 build
 deploy
 docs/*.html
