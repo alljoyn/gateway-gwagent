@@ -17,8 +17,8 @@
 Import('gateway_env')
 import os
 
-gateway_env.Append(CPPPATH = ['$LIBXML2_BASE'])
-gateway_env.Append(LIBS = ['libxml2'])
+gateway_env.ParseConfig('pkg-config --cflags --libs libxml-2.0')
+
 gateway_env.Prepend(LIBS = ['alljoyn_about', 'alljoyn_services_common'])
 
 srcs = gateway_env.Glob('*.cc')
