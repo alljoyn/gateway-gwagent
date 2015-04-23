@@ -27,6 +27,11 @@ vars.Add(EnumVariable('BUILD_SERVICES_SAMPLES',
                       'off',
                       allowed_values = ['off', 'on']))
 
+vars.Add(EnumVariable('BUILD_EXTERNAL_PROJECTS',
+                      'Build any external project found project.',
+                      'off',
+                      allowed_values = ['off', 'on']))
+
 vars.Add(PathVariable('APP_COMMON_DIR',
                       'Directory containing common sample application sources.',
                       os.environ.get('APP_COMMON_DIR','../../services/base/sample_apps')))
