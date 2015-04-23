@@ -31,10 +31,6 @@ vars.Add(PathVariable('APP_COMMON_DIR',
                       'Directory containing common sample application sources.',
                       os.environ.get('APP_COMMON_DIR','../../services/base/sample_apps')))
 					  
-vars.Add(PathVariable('LIBXML2_BASE',
-                      'Directory containing libxml2 include files.',
-                      os.environ.get('LIBXML2_BASE','/usr/include/libxml2')))					  
-                      
 vars.Update(env)
 Help(vars.GenerateHelpText(env))
 
