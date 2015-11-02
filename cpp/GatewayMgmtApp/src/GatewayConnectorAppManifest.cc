@@ -25,7 +25,7 @@ namespace gw {
 using namespace gwConsts;
 
 GatewayConnectorAppManifest::GatewayConnectorAppManifest() : m_ManifestData(""), m_PackageName(""), m_FriendlyName(""),
-    m_ExecutableName(""), m_Version(""), m_MinAjSdkVersion("")
+    m_ExecutableName(""), m_Version(""), m_Type(""), m_MinAjSdkVersion("")
 {
 }
 
@@ -51,6 +51,11 @@ const qcc::String& GatewayConnectorAppManifest::getPackageName() const
 const qcc::String& GatewayConnectorAppManifest::getVersion() const
 {
     return m_Version;
+}
+
+const qcc::String& GatewayConnectorAppManifest::getType() const
+{
+    return m_Type;
 }
 
 const qcc::String& GatewayConnectorAppManifest::getManifestData() const
@@ -152,6 +157,8 @@ QStatus GatewayConnectorAppManifest::parseManifestFile(qcc::String const& manife
             m_PackageName.assign((const char*)value);
         } else if (xmlStrEqual(keyName, (const xmlChar*)"version")) {
             m_Version.assign((const char*)value);
+        } else if (xmlStrEqual(keyName, (const xmlChar*)"type")) {
+            m_Type.assign((const char*)value);
         } else if (xmlStrEqual(keyName, (const xmlChar*)"minAjSdkVersion")) {
             m_MinAjSdkVersion.assign((const char*)value);
         } else if (xmlStrEqual(keyName, (const xmlChar*)"exposedServices")) {

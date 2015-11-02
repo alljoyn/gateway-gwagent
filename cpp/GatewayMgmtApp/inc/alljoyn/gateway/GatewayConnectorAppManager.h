@@ -33,7 +33,6 @@ class GatewayConnectorApp;
  */
 class GatewayConnectorAppManager {
   public:
-
     /**
      * Constructor for GatewayConnectorAppManager
      */

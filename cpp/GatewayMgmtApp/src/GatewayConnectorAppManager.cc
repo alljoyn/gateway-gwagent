@@ -196,5 +196,3 @@ void GatewayConnectorAppManager::sigChildReceived(pid_t pid)
 
 } /* namespace gw */
 } /* namespace ajn */
-
-

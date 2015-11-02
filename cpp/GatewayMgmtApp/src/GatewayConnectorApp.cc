@@ -222,7 +222,7 @@ QStatus GatewayConnectorApp::loadAcls()
             continue;
         }
 
-        if (entry->d_type != DT_REG) {         // this is not a regular file - cannot be an acl
+        if (entry->d_type != DT_REG) {         // this is not a regular file - cannot be an acl;
             QCC_DbgTrace(("Ignoring non file %s", entry->d_name));
             continue;
         }
@@ -387,7 +387,12 @@ bool GatewayConnectorApp::startConnectorApp()
             _Exit(0);
         }
 
-        qcc::String executable = appDirectory + "/" + m_Manifest.getExecutableName();
+        qcc::String executable;
+        if( m_Manifest.getType() == "js") {
+            executable = ALLJOYNJS_EXECUTABLE_PATH;
+        } else {
+            executable = appDirectory + "/" + m_Manifest.getExecutableName();
+        }
         const std::vector<qcc::String>& appEnvVars = m_Manifest.getEnvironmentVariables();
         char* envVars[appEnvVars.size() + 1];
         envVars[appEnvVars.size()] = 0;

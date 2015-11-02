@@ -134,6 +134,7 @@
   <xs:complexType name="ManifestType">
     <xs:sequence>
         <xs:element name="connectorId" type="gen:ConnectorIdString" minOccurs="1" maxOccurs="1"/>
+        <xs:element name="type" type="xs:string" minOccurs="0" maxOccurs="1" />
         <xs:element name="friendlyName" type="xs:string" minOccurs="1" maxOccurs="1"/>
         <xs:element name="packageName" type="gen:NameString" minOccurs="1" maxOccurs="1"/>
         <xs:element name="version" type="gen:NameString" minOccurs="1" maxOccurs="1"/>      	  

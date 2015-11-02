@@ -81,6 +81,12 @@ class GatewayConnectorAppManifest {
     const qcc::String& getVersion() const;
 
     /**
+     * Get App Type
+     * @return type
+     */
+    const qcc::String& getType() const;
+
+    /**
      * Get the ManifestData
      * @return manifestData
      */
@@ -142,6 +148,11 @@ class GatewayConnectorAppManifest {
      * Version of the App
      */
     qcc::String m_Version;
+
+    /**
+     * Type of the app
+     */
+    qcc::String m_Type;
 
     /**
      * MinAjSdkVersion of the App
