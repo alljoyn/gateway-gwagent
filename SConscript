@@ -36,6 +36,8 @@ if 'cpp' in env['bindings'] and not env.has_key('_ALLJOYNCORE_') and os.path.exi
 if 'java' in env['bindings'] and not env.has_key('_ALLJOYN_JAVA_') and os.path.exists('../../core/alljoyn/alljoyn_java/SConscript'):
     env.SConscript('../../core/alljoyn/alljoyn_java/SConscript')
 
+Command('./build/linux/x86_64/debug/dist/gatewayMgmtApp/bin/alljoynjs','../../core/alljoyn-js/dist/bin/alljoynjs', Copy("$TARGET", "$SOURCE"))
+
 gateway_env = env.Clone()
 
 for b in gateway_env['bindings']:
