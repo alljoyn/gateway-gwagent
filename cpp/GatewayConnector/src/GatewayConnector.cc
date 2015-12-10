@@ -137,11 +137,19 @@ QStatus GatewayConnector::updateConnectionStatus(ConnectionStatus connStatus)
 
 void GatewayConnector::mergedAclUpdatedSignalHandler(const InterfaceDescription::Member* member, const char* sourcePath, Message& msg)
 {
+    QCC_UNUSED(member);
+    QCC_UNUSED(sourcePath);
+    QCC_UNUSED(msg);
+
     mergedAclUpdated();
 }
 
 void GatewayConnector::shutdownSignalHandler(const InterfaceDescription::Member* member, const char* sourcePath, Message& msg)
 {
+    QCC_UNUSED(member);
+    QCC_UNUSED(sourcePath);
+    QCC_UNUSED(msg);
+
     shutdown();
 }
 

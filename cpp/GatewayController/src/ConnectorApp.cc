@@ -510,6 +510,8 @@ end:
 void ConnectorApp::handleSignal(const ajn::InterfaceDescription::Member* member,
                                 const char* srcPath, ajn::Message& msg)
 {
+    QCC_UNUSED(member);
+
     QCC_DbgHLPrintf((srcPath));
 
     const ajn::MsgArg* returnArgs;

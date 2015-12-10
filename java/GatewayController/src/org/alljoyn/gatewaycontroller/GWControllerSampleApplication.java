@@ -322,7 +322,7 @@ public class GWControllerSampleApplication extends Application implements Gatewa
         bus = new BusAttachment("GatewayController", BusAttachment.RemoteMessage.Receive);
 
         // For verbose AJ logging use the following lines
-        // bus.setDaemonDebug("ALL", 7);
+        bus.setDaemonDebug("ALL", 7);
         // bus.setLogLevels("ALLJOYN=7");
         // bus.setLogLevels("ALL=7");
         // bus.useOSLogging(true);

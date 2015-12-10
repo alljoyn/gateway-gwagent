@@ -78,6 +78,7 @@ AppMgmtBusObject::~AppMgmtBusObject()
 
 QStatus AppMgmtBusObject::Get(const char* interfaceName, const char* propName, MsgArg& val)
 {
+    QCC_UNUSED(interfaceName);
     QCC_DbgTrace(("Get property was called in AppMgmtBusObject class:"));
 
     if (0 == strcmp(AJ_PROPERTY_VERSION.c_str(), propName)) {
@@ -88,11 +89,17 @@ QStatus AppMgmtBusObject::Get(const char* interfaceName, const char* propName, M
 
 QStatus AppMgmtBusObject::Set(const char* interfaceName, const char* propName, MsgArg& val)
 {
+    QCC_UNUSED(interfaceName);
+    QCC_UNUSED(propName);
+    QCC_UNUSED(val);
+
     return ER_ALLJOYN_ACCESS_PERMISSION_ERROR;
 }
 
 void AppMgmtBusObject::GetInstalledApps(const InterfaceDescription::Member* member, Message& msg)
 {
+    QCC_UNUSED(member);
+
     QCC_DbgTrace(("Received GetInstalledApps method call"));
 
     QStatus status;

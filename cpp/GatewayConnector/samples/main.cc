@@ -113,6 +113,8 @@ class ConfigSession : public BusAttachment::JoinSessionAsyncCB, public SessionLi
     ConfigSession(BusAttachment* busAttachment) : bus(busAttachment) { }
 
     virtual void JoinSessionCB(QStatus status, SessionId sessionId, const SessionOpts& opts, void* context) {
+        QCC_UNUSED(opts);
+
         static bool firstJoin = true;
         QStatus myStat;
 
@@ -295,6 +297,8 @@ class ConfigAboutListener : public AboutListener {
 
     virtual void Announced(const char* busName, uint16_t version, SessionPort port,
                            const MsgArg& objectDescriptionArg, const MsgArg& aboutDataArg) {
+        QCC_UNUSED(version);
+        QCC_UNUSED(aboutDataArg);
 
         QStatus status = ER_OK;
 
@@ -449,9 +453,21 @@ class MyReceiver : public NotificationReceiver {
 
 
 int main(int argc, char** argv) {
+    QCC_UNUSED(argc);
+    QCC_UNUSED(argv);
+
     if (AllJoynInit() != ER_OK) {
+        AllJoynShutdown();
         return 1;
     }
+#ifdef ROUTER
+    if (AllJoynRouterInit() != ER_OK) {
+        AllJoynShutdown();
+        return 1;
+    }
+#endif
+
+
     signal(SIGINT, signal_callback_handler);
     BusAttachment bus("ConnectorApp", true);
     CommonBusListener busListener;
@@ -490,7 +506,7 @@ int main(int argc, char** argv) {
     //====================================
     keyListener.setPassCode("000000");
     qcc::String keystore = "/opt/alljoyn/apps/" + wellknownName + "/store/.alljoyn_keystore.ks";
-    status = bus.EnablePeerSecurity("ALLJOYN_SRP_KEYX ALLJOYN_SRP_LOGON ALLJOYN_ECDHE_PSK", &keyListener, keystore.c_str(), false);
+    status = bus.EnablePeerSecurity("ALLJOYN_SRP_KEYX ALLJOYN_ECDHE_PSK", &keyListener, keystore.c_str(), false);
 
     //====================================
     // Initialize GwConnector interface
@@ -614,6 +630,7 @@ int main(int argc, char** argv) {
 
     notificationService->shutdownSender();
     notificationService->shutdown();
+
     AllJoynShutdown();
     return exitManager.getSignum();
 }
