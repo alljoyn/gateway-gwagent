@@ -820,6 +820,10 @@ int GatewayRouterPolicyManager::writeRemotedApps(xmlTextWriterPtr writer, const 
 
 void GatewayRouterPolicyManager::Announced(const char* busName, uint16_t version, SessionPort port, const MsgArg& objectDescs, const MsgArg& aboutDataArg)
 {
+    QCC_UNUSED(version);
+    QCC_UNUSED(port);
+    QCC_UNUSED(objectDescs);
+
     QCC_DbgTrace(("Received Announcement from %s", busName));
 
     char* deviceId;
