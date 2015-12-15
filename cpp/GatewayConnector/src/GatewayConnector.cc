@@ -98,12 +98,12 @@ const InterfaceDescription* GatewayConnector::initInterface(QStatus& status)
         return NULL;
     }
 
-    status = ifc->AddSignal("MergedAclUpdated", NULL, NULL);
+    status = ifc->AddSignal("MergedAclUpdated", NULL, NULL, 0);
     if (ER_OK != status) {
         return NULL;
     }
 
-    status = ifc->AddSignal("ShutdownApp", NULL, NULL);
+    status = ifc->AddSignal("ShutdownApp", NULL, NULL, 0);
     if (ER_OK != status) {
         return NULL;
     }

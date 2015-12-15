@@ -22,7 +22,6 @@
 namespace ajn {
 namespace gw {
 using namespace qcc;
-using namespace services;
 using namespace gwConsts;
 
 AclBusObject::AclBusObject(BusAttachment* bus, GatewayAcl* acl, String const& objectPath, QStatus* status) :

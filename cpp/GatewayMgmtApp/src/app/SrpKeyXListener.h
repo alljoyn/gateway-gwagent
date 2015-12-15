@@ -1,5 +1,5 @@
 /******************************************************************************
- * Copyright (c) 2013-2014, AllSeen Alliance. All rights reserved.
+ * Copyright AllSeen Alliance. All rights reserved.
  *
  *    Permission to use, copy, modify, and/or distribute this software for any
  *    purpose with or without fee is hereby granted, provided that the above
@@ -19,26 +19,66 @@
 
 #include <alljoyn/AuthListener.h>
 
-/*
+#if defined(QCC_OS_GROUP_WINDOWS)
+/* Disabling warning C 4100. Function doesnt use all passed in parameters */
+#pragma warning(push)
+#pragma warning(disable: 4100)
+#endif
+
+
+/**
+ * class SrpKeyXListener
  * A listener for Authentication
  */
 class SrpKeyXListener : public ajn::AuthListener {
   public:
+    /**
+     * SrpKeyXListener
+     */
     SrpKeyXListener();
 
+    /**
+     * ~SrpKeyXListener
+     */
     virtual ~SrpKeyXListener();
 
+    /**
+     * setPassCode
+     * @param passCode to set
+     */
     void setPassCode(qcc::String const& passCode);
 
+    /**
+     * setGetPassCode
+     * @param getPassCode - callback function to set
+     */
+    void setGetPassCode(void (*getPassCode)(qcc::String&));
+
+    /**
+     * RequestCredentials
+     * @param authMechanism
+     * @param authPeer
+     * @param authCount
+     * @param userId
+     * @param credMask
+     * @param creds
+     * @return boolean
+     */
     bool RequestCredentials(const char* authMechanism, const char* authPeer, uint16_t authCount, const char* userId,
                             uint16_t credMask, Credentials& creds);
 
+    /**
+     * AuthenticationComplete
+     * @param authMechanism
+     * @param authPeer
+     * @param success
+     */
     void AuthenticationComplete(const char* authMechanism, const char* authPeer, bool success);
 
   private:
-
     qcc::String m_PassCode;
 
+    void (*m_GetPassCode)(qcc::String&);
 };
 
 #endif /* SRPKEYLISTENER_H_ */
