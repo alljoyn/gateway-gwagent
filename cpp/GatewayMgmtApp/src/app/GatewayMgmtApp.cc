@@ -291,8 +291,8 @@ start:
         return 1;
     }
 
-    AboutObj aboutObj(*bus);
-    status = aboutObj.Announce(SERVICE_PORT, *aboutData);
+    AboutObj* aboutObj = new AboutObj(*bus);
+    status = aboutObj->Announce(SERVICE_PORT, *aboutData);
     if (status != ER_OK) {
         QCC_LogError(status, ("Could not announce."));
         cleanup();
@@ -303,6 +303,7 @@ start:
 
     WaitForSigInt();
 
+    delete aboutObj;
     cleanup();
     if (s_restart) {
         s_restart = false;

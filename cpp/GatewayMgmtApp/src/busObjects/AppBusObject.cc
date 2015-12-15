@@ -21,7 +21,6 @@
 
 namespace ajn {
 namespace gw {
-using namespace services;
 using namespace qcc;
 using namespace gwConsts;
 
@@ -84,7 +83,7 @@ QStatus AppBusObject::createAppInterface(BusAttachment* bus)
         if (status != ER_OK) {
             goto postCreate;
         }
-        status = interfaceDescription->AddSignal(AJ_SIGNAL_APP_STATUS_CHANGED.c_str(), AJ_APP_STATUS_CHANGED_PARAMS.c_str(), AJ_APP_STATUS_CHANGED_PARAM_NAMES.c_str());
+        status = interfaceDescription->AddSignal(AJ_SIGNAL_APP_STATUS_CHANGED.c_str(), AJ_APP_STATUS_CHANGED_PARAMS.c_str(), AJ_APP_STATUS_CHANGED_PARAM_NAMES.c_str(), 0);
         if (status != ER_OK) {
             goto postCreate;
         }
@@ -158,11 +157,11 @@ QStatus AppBusObject::createAppConnectorInterface(BusAttachment* bus)
         if (status != ER_OK) {
             goto postCreate;
         }
-        status = interfaceDescription->AddSignal(AJ_SIGNAL_ACL_UPDATED.c_str(), AJ_ACL_UPDATED_PARAMS.c_str(), AJ_ACL_UPDATED_PARAM_NAMES.c_str());
+        status = interfaceDescription->AddSignal(AJ_SIGNAL_ACL_UPDATED.c_str(), AJ_ACL_UPDATED_PARAMS.c_str(), AJ_ACL_UPDATED_PARAM_NAMES.c_str(), 0);
         if (status != ER_OK) {
             goto postCreate;
         }
-        status = interfaceDescription->AddSignal(AJ_SIGNAL_SHUTDOWN_APP.c_str(), AJ_SHUTDOWN_APP_PARAMS.c_str(), AJ_SHUTDOWN_APP_PARAM_NAMES.c_str());
+        status = interfaceDescription->AddSignal(AJ_SIGNAL_SHUTDOWN_APP.c_str(), AJ_SHUTDOWN_APP_PARAMS.c_str(), AJ_SHUTDOWN_APP_PARAM_NAMES.c_str(), 0);
         if (status != ER_OK) {
             goto postCreate;
         }

@@ -19,7 +19,8 @@
 
 #include <vector>
 #include <alljoyn/Status.h>
-#include <alljoyn/about/AboutClient.h>
+#include <alljoyn/AboutData.h>
+#include <alljoyn/AboutObjectDescription.h>
 
 namespace ajn {
 namespace gwc {
@@ -33,30 +34,29 @@ class AnnouncementData {
      * AnnouncementData
      * @param portNumber Announcemt port number
      * @param aboutData As was received from the announcement handler
-     * @param objectDescriptions As was received from the announcement handler
+     * @param AboutObjectDescriptions As was received from the announcement handler
      */
-
-    AnnouncementData(uint16_t portNumber, const ajn::services::AboutClient::AboutData& aboutData, const ajn::services::AboutClient::ObjectDescriptions& objectDescriptions);
+    AnnouncementData(uint16_t portNumber, const ajn::AboutData& aboutData, const ajn::AboutObjectDescription& objectDescriptions);
 
     /**
      * GetObjectDescriptions
      * @return objectDescriptions As was received from the announcement handler
      */
 
-    const ajn::services::AboutClient::ObjectDescriptions& GetObjectDescriptions() const { return m_ObjectDescriptions; }
+    const ajn::AboutObjectDescription& GetObjectDescriptions() const { return m_ObjectDescriptions; }
 
     /**
      * GetAboutData
      * @return aboutData As was received from the announcement handler
      */
 
-    const ajn::services::AboutClient::AboutData& GetAboutData() const { return m_AboutData; }
+    const ajn::AboutData& GetAboutData() const { return m_AboutData; }
 
     const short getPortNumber() const { return m_PortNumber; }
 
   private:
-    ajn::services::AboutClient::AboutData m_AboutData;
-    ajn::services::AboutClient::ObjectDescriptions m_ObjectDescriptions;
+    ajn::AboutData m_AboutData;
+    ajn::AboutObjectDescription m_ObjectDescriptions;
     short m_PortNumber;
 
 

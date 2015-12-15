@@ -39,7 +39,7 @@ QStatus RemotedApp::init(const qcc::String& busUniqueName, const qcc::String& ap
     return ER_OK;
 }
 
-QStatus RemotedApp::init(ajn::services::AboutClient::AboutData const& aboutData, const std::vector<RuleObjectDescription*>& ruleObjDescriptions)
+QStatus RemotedApp::init(ajn::AboutData const& aboutData, const std::vector<RuleObjectDescription*>& ruleObjDescriptions)
 {
     m_RuleObjDescriptions = ruleObjDescriptions;
 

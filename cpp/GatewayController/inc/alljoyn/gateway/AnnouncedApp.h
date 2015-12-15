@@ -49,7 +49,7 @@ class AnnouncedApp {
      * @param aboutData The data sent with the Announcement
      * @return {@link QStatus}
      */
-    QStatus init(const qcc::String& busName, ajn::services::AboutClient::AboutData const& aboutData);
+    QStatus init(const qcc::String& busName, ajn::AboutData const& aboutData);
 
     /**
      * Destructor
@@ -119,7 +119,7 @@ class AnnouncedApp {
     /**
      * Create an entry. If information is missing from the aboutData map an empty string is entered instead
      */
-    qcc::String getAboutDataEntry(ajn::services::AboutClient::AboutData const& aboutData, const qcc::String& key);
+    qcc::String getAboutDataEntry(ajn::AboutData const& aboutData, const qcc::String& key);
 
     /**
      * The unique name of the {@link BusAttachment} that sent the Announcement signal
