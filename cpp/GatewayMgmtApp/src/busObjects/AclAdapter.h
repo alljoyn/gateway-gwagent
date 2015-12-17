@@ -17,7 +17,6 @@
 #ifndef ACLADAPTER_H_
 #define ACLADAPTER_H_
 
-#include <alljoyn/about/AnnounceHandler.h>
 #include <alljoyn/gateway/GatewayAclRules.h>
 #include <alljoyn/gateway/GatewayAcl.h>
 

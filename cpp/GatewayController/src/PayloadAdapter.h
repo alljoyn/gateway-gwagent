@@ -17,7 +17,6 @@
 #ifndef __GATEWAYCONTROLLERCPP__PAYLOADADAPTER__
 #define __GATEWAYCONTROLLERCPP__PAYLOADADAPTER__
 
-#include <alljoyn/about/AnnounceHandler.h>
 #include <alljoyn/gateway/Acl.h>
 #include <alljoyn/gateway/RuleObjectDescription.h>
 

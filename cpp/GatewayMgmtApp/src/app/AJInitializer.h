@@ -1,5 +1,5 @@
 /******************************************************************************
- * Copyright (c) 2014, AllSeen Alliance. All rights reserved.
+ * Copyright AllSeen Alliance. All rights reserved.
  *
  *    Permission to use, copy, modify, and/or distribute this software for any
  *    purpose with or without fee is hereby granted, provided that the above
@@ -14,15 +14,42 @@
  *    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  ******************************************************************************/
 
-#include <alljoyn/gateway/AnnouncementData.h>
+#ifndef AJINITIALIZER_H_
+#define AJINITIALIZER_H_
 
-namespace ajn {
-namespace gwc {
+#include <alljoyn/Status.h>
 
-AnnouncementData::AnnouncementData(uint16_t portNumber, const ajn::AboutData& aboutData, const ajn::AboutObjectDescription& objectDescriptions) :
-    m_AboutData(aboutData), m_ObjectDescriptions(objectDescriptions), m_PortNumber(portNumber)
-{
+/**
+ * class AJInitializer
+ * Utility class for handling AllJoyn lifecycle methods
+ */
 
-}
-}
-}
+class AJInitializer {
+  public:
+    /**
+     * AJInitializer 
+     * Calls AllJoynInit(). If bundled router is enabled it also calls AllJoynRouterInit()
+     * 
+     */
+    AJInitializer();
+
+    /**
+     * ~AJInitializer
+     * Calls AllJoynRouterShutdown() if bundled router is enabled and then calls AllJoynShutdown()
+     */
+    ~AJInitializer();
+
+    /*
+     * Return the status of AllJoynInit and AllJoynRouterInit
+     * @return QStatus
+     */
+    QStatus Status() const;
+
+  private:
+    /*
+     * Status of AllJoynInit and AllJoynRouterInit
+     */
+    QStatus m_Status;
+};
+
+#endif /* AJINITIALIZERGWAGENT_H_ */
