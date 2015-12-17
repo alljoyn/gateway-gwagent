@@ -164,6 +164,7 @@ AclResponseCode GatewayAcl::updateAclStatus(AclStatus aclStatus)
         }
     }
 
+    sleep(5);
     status = m_ConnectorApp->getAppBusObject()->SendAclUpdatedSignal();
     if (status != ER_OK) {
         QCC_LogError(status, ("Sending AclUpdated Failed"));

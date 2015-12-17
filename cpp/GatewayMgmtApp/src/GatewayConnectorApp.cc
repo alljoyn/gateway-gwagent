@@ -36,7 +36,6 @@ namespace ajn {
 namespace gw {
 using namespace gwConsts;
 using namespace qcc;
-using namespace services;
 
 GatewayConnectorApp::GatewayConnectorApp(qcc::String const& connectorId, GatewayConnectorAppManifest const& manifest) : m_ConnectorId(connectorId),
     m_ObjectPath(AJ_GW_OBJECTPATH + "/" + connectorId), m_ConnectionStatus(GW_CS_NOT_INITIALIZED), m_OperationalStatus(GW_OS_STOPPED),

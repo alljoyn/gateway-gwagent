@@ -19,7 +19,7 @@
 namespace ajn {
 namespace gwc {
 
-AnnouncementData::AnnouncementData(uint16_t portNumber, const ajn::services::AboutClient::AboutData& aboutData, const ajn::services::AboutClient::ObjectDescriptions& objectDescriptions) :
+AnnouncementData::AnnouncementData(uint16_t portNumber, const ajn::AboutData& aboutData, const ajn::AboutObjectDescription& objectDescriptions) :
     m_AboutData(aboutData), m_ObjectDescriptions(objectDescriptions), m_PortNumber(portNumber)
 {
 
