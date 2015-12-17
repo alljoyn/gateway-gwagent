@@ -98,12 +98,12 @@ const InterfaceDescription* GatewayConnector::initInterface(QStatus& status)
         return NULL;
     }
 
-    status = ifc->AddSignal("MergedAclUpdated", NULL, NULL);
+    status = ifc->AddSignal("MergedAclUpdated", NULL, NULL, 0);
     if (ER_OK != status) {
         return NULL;
     }
 
-    status = ifc->AddSignal("ShutdownApp", NULL, NULL);
+    status = ifc->AddSignal("ShutdownApp", NULL, NULL, 0);
     if (ER_OK != status) {
         return NULL;
     }
@@ -137,11 +137,19 @@ QStatus GatewayConnector::updateConnectionStatus(ConnectionStatus connStatus)
 
 void GatewayConnector::mergedAclUpdatedSignalHandler(const InterfaceDescription::Member* member, const char* sourcePath, Message& msg)
 {
+    QCC_UNUSED(member);
+    QCC_UNUSED(sourcePath);
+    QCC_UNUSED(msg);
+
     mergedAclUpdated();
 }
 
 void GatewayConnector::shutdownSignalHandler(const InterfaceDescription::Member* member, const char* sourcePath, Message& msg)
 {
+    QCC_UNUSED(member);
+    QCC_UNUSED(sourcePath);
+    QCC_UNUSED(msg);
+
     shutdown();
 }
 

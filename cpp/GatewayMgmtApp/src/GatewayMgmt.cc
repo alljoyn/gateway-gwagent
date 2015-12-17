@@ -60,6 +60,7 @@ uint16_t GatewayMgmt::getVersion()
 
 void GatewayMgmt::sigChildCallback(int32_t signum)
 {
+    QCC_UNUSED(signum);
     if (!s_Instance) {
         return;
     }

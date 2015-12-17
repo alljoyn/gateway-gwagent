@@ -197,6 +197,7 @@ qcc::String appsPolicyDirOption = "--apps-policy-dir=";
 int main(int argc, char** argv)
 {
     if (AllJoynInit() != ER_OK) {
+        AllJoynShutdown();
         return 1;
     }
 #ifdef ROUTER
@@ -238,7 +239,7 @@ start:
 
     keyListener = new SrpKeyXListener();
     keyListener->setPassCode("000000");
-    status = bus->EnablePeerSecurity("ALLJOYN_SRP_KEYX ALLJOYN_SRP_LOGON ALLJOYN_ECDHE_PSK", keyListener);
+    status = bus->EnablePeerSecurity("ALLJOYN_SRP_KEYX ALLJOYN_ECDHE_PSK", keyListener);
     if (status != ER_OK) {
         QCC_LogError(status, ("Could not enable PeerSecurity"));
         cleanup();
@@ -290,8 +291,8 @@ start:
         return 1;
     }
 
-    AboutObj aboutObj(*bus);
-    status = aboutObj.Announce(SERVICE_PORT, *aboutData);
+    AboutObj* aboutObj = new AboutObj(*bus);
+    status = aboutObj->Announce(SERVICE_PORT, *aboutData);
     if (status != ER_OK) {
         QCC_LogError(status, ("Could not announce."));
         cleanup();
@@ -302,11 +303,16 @@ start:
 
     WaitForSigInt();
 
+    delete aboutObj;
     cleanup();
     if (s_restart) {
         s_restart = false;
         goto start;
     }
+
+#ifdef ROUTER
+    AllJoynRouterShutdown();
+#endif
     AllJoynShutdown();
     return 0;
 }

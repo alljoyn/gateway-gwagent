@@ -20,10 +20,8 @@
 #include <vector>
 #include <qcc/String.h>
 #include <alljoyn/Status.h>
+#include <alljoyn/AboutObjectDescription.h>
 #include <alljoyn/gateway/GatewayMgmtApp.h>
-#include <alljoyn/about/AnnounceHandler.h>
-
-
 
 namespace ajn {
 namespace gwc {
@@ -55,15 +53,14 @@ class GatewayController {
      */
     BusAttachment* getBusAttachment();
 
-
     /**
      * create a Gateway by parsing announce descriptions.
      * @param gatewayBusName - BusName of device received in announce
-     * @param objectDescs - ObjectDescriptions received in announce
+     * @param objectDescs - AboutObjectDescription received in announce
      * @param gatewayMgmtApp a GatewayMgmtApp
      * @return {@link QStatus}
      */
-    QStatus createGateway(const qcc::String& gatewayBusName, const ajn::services::AnnounceHandler::ObjectDescriptions& objectDescs, const ajn::services::AnnounceHandler::AboutData& aboutData, GatewayMgmtApp** gatewayMgmtApp);
+    QStatus createGateway(const qcc::String& gatewayBusName, const ajn::AboutObjectDescription& objectDescs, const ajn::AboutData& aboutData, GatewayMgmtApp** gatewayMgmtApp);
 
     /**
      * getGateway - get a Gateway using the busName

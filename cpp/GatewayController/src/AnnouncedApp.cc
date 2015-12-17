@@ -43,21 +43,20 @@ QStatus AnnouncedApp::init(const qcc::String& busName, const qcc::String& appNam
     return setAppId(appId, appIdLength);
 }
 
-QStatus AnnouncedApp::init(const qcc::String& busName, ajn::services::AboutClient::AboutData const& aboutData)
+QStatus AnnouncedApp::init(const qcc::String& busName, ajn::AboutData const& aboutData)
 {
-    ajn::services::AboutClient::AboutData::const_iterator itr = aboutData.find("AppId");
 
-    if (itr == aboutData.end()) {
+    MsgArg* value;
+    uint8_t* appIdBin = NULL;
+    size_t len;
+    AboutData tmpAboutData(aboutData);
+    QStatus status = tmpAboutData.GetField("AppId", value, NULL);
+    if (status != ER_OK) {
         QCC_LogError(ER_FAIL, ("AppId missing in about structure, bus name is '%s'", busName.c_str()));
         return ER_FAIL;
     }
 
-    const MsgArg*value = &itr->second;
-
-
-    uint8_t* appIdBin = NULL;
-    size_t len;
-    QStatus status = value->Get("ay", &len, &appIdBin);
+    status = value->Get("ay", &len, &appIdBin);
     if (status != ER_OK) {
         QCC_LogError(status, ("Get appID failed"));
         return status;
@@ -67,15 +66,15 @@ QStatus AnnouncedApp::init(const qcc::String& busName, ajn::services::AboutClien
 }
 
 
-qcc::String AnnouncedApp::getAboutDataEntry(ajn::services::AboutClient::AboutData const& aboutData, const qcc::String& key)
+qcc::String AnnouncedApp::getAboutDataEntry(ajn::AboutData const& aboutData, const qcc::String& key)
 {
-    ajn::services::AboutClient::AboutData::const_iterator itr = aboutData.find(key);
-    if (itr == aboutData.end()) {
+    MsgArg* value;
+    AboutData tmpAboutData(aboutData);
+    QStatus status = tmpAboutData.GetField("AppId", value, NULL);
+    if (status != ER_OK) {
         QCC_LogError(ER_FAIL, ("Called GetAboutDataEntry but couldn't find the key '%s' requested", key.c_str()));
         return "";
     }
-
-    const MsgArg*value = &itr->second;
 
     if (value->typeId == ALLJOYN_STRING) {
         return value->v_string.str;
