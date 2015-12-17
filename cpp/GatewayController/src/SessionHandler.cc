@@ -48,6 +48,8 @@ void SessionHandler::SessionLost(ajn::SessionId sessionId)
 
 void SessionHandler::JoinSessionCB(QStatus status, ajn::SessionId id, const ajn::SessionOpts& opts, void* context)
 {
+    QCC_UNUSED(opts);
+    QCC_UNUSED(context);
     ajn::gwc::SessionListener* listener = m_Gateway->getListener();
 
     if (status != ER_OK) {

@@ -22,7 +22,6 @@
 namespace ajn {
 namespace gw {
 using namespace qcc;
-using namespace services;
 using namespace gwConsts;
 
 AclBusObject::AclBusObject(BusAttachment* bus, GatewayAcl* acl, String const& objectPath, QStatus* status) :
@@ -146,6 +145,8 @@ AclBusObject::~AclBusObject()
 
 QStatus AclBusObject::Get(const char* interfaceName, const char* propName, MsgArg& val)
 {
+    QCC_UNUSED(interfaceName);
+
     QCC_DbgTrace(("Get property was called in GatewayAclBusObject class:"));
 
     if (0 == strcmp(AJ_PROPERTY_VERSION.c_str(), propName)) {
@@ -156,11 +157,17 @@ QStatus AclBusObject::Get(const char* interfaceName, const char* propName, MsgAr
 
 QStatus AclBusObject::Set(const char* interfaceName, const char* propName, MsgArg& val)
 {
+    QCC_UNUSED(interfaceName);
+    QCC_UNUSED(propName);
+    QCC_UNUSED(val);
+
     return ER_ALLJOYN_ACCESS_PERMISSION_ERROR;
 }
 
 void AclBusObject::ActivateAcl(const InterfaceDescription::Member* member, Message& msg)
 {
+    QCC_UNUSED(member);
+
     QCC_DbgTrace(("Received ActivateAcl method call"));
     uint16_t responseCode = m_Acl->updateAclStatus(GW_AS_ACTIVE);
 
@@ -180,6 +187,8 @@ void AclBusObject::ActivateAcl(const InterfaceDescription::Member* member, Messa
 
 void AclBusObject::GetAcl(const InterfaceDescription::Member* member, Message& msg)
 {
+    QCC_UNUSED(member);
+
     QCC_DbgTrace(("Received GetAcl method call"));
 
     ajn::MsgArg replyArg[5];
@@ -198,6 +207,8 @@ void AclBusObject::GetAcl(const InterfaceDescription::Member* member, Message& m
 
 void AclBusObject::GetAclStatus(const InterfaceDescription::Member* member, Message& msg)
 {
+    QCC_UNUSED(member);
+
     QCC_DbgTrace(("Received GetAclStatus method call"));
 
     ajn::MsgArg replyArg[1];
@@ -216,6 +227,8 @@ void AclBusObject::GetAclStatus(const InterfaceDescription::Member* member, Mess
 
 void AclBusObject::UpdateAcl(const InterfaceDescription::Member* member, Message& msg)
 {
+    QCC_UNUSED(member);
+
     QCC_DbgTrace(("Received UpdateAcl method call"));
 
     qcc::String aclName;
@@ -247,6 +260,8 @@ void AclBusObject::UpdateAcl(const InterfaceDescription::Member* member, Message
 
 void AclBusObject::UpdateMetadata(const InterfaceDescription::Member* member, Message& msg)
 {
+    QCC_UNUSED(member);
+
     QCC_DbgTrace(("Received UpdateMetadata method call"));
 
     const ajn::MsgArg* args = 0;
@@ -283,6 +298,8 @@ void AclBusObject::UpdateMetadata(const InterfaceDescription::Member* member, Me
 
 void AclBusObject::UpdateCustomMetadata(const InterfaceDescription::Member* member, Message& msg)
 {
+    QCC_UNUSED(member);
+
     QCC_DbgTrace(("Received UpdateCustomMetadata method call"));
 
     const ajn::MsgArg* args = 0;
@@ -319,6 +336,7 @@ void AclBusObject::UpdateCustomMetadata(const InterfaceDescription::Member* memb
 
 void AclBusObject::DeactivateAcl(const InterfaceDescription::Member* member, Message& msg)
 {
+    QCC_UNUSED(member);
     QCC_DbgTrace(("Received DeactivateAcl method call"));
     uint16_t responseCode = m_Acl->updateAclStatus(GW_AS_INACTIVE);
 
