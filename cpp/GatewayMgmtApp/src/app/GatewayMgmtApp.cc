@@ -22,6 +22,7 @@
 #include <alljoyn/gateway/GatewayMgmt.h>
 #include <alljoyn/gateway/GatewayBusListener.h>
 #include "../GatewayConstants.h"
+#include "AJInitializer.h"
 #include "SrpKeyXListener.h"
 #include "GuidUtil.h"
 
@@ -196,15 +197,11 @@ qcc::String appsPolicyDirOption = "--apps-policy-dir=";
 
 int main(int argc, char** argv)
 {
-    if (AllJoynInit() != ER_OK) {
+    AJInitializer ajInit;
+    if (ajInit.Status() != ER_OK) {
         return 1;
     }
-#ifdef ROUTER
-    if (AllJoynRouterInit() != ER_OK) {
-        AllJoynShutdown();
-        return 1;
-    }
-#endif
+
     // Allow CTRL+C to end application
     signal(SIGINT, signal_callback_handler);
     signal(SIGTERM, signal_callback_handler);
@@ -238,7 +235,7 @@ start:
 
     keyListener = new SrpKeyXListener();
     keyListener->setPassCode("000000");
-    status = bus->EnablePeerSecurity("ALLJOYN_SRP_KEYX ALLJOYN_SRP_LOGON ALLJOYN_ECDHE_PSK", keyListener);
+    status = bus->EnablePeerSecurity("ALLJOYN_SRP_KEYX ALLJOYN_ECDHE_PSK", keyListener);
     if (status != ER_OK) {
         QCC_LogError(status, ("Could not enable PeerSecurity"));
         cleanup();
@@ -307,6 +304,6 @@ start:
         s_restart = false;
         goto start;
     }
-    AllJoynShutdown();
+
     return 0;
 }

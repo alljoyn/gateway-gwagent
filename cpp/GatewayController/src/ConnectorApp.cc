@@ -125,7 +125,7 @@ QStatus ConnectorApp::init(const qcc::String& gwBusName, ajn::MsgArg*appInfo)
                 return status;
             }
 
-            status = interfaceDescription->AddSignal(AJ_SIGNAL_APPSTATUSCHANGED.c_str(), "qsqq", "installStatus,installDescription,connectionStatus,operationalStatus");
+            status = interfaceDescription->AddSignal(AJ_SIGNAL_APPSTATUSCHANGED.c_str(), "qsqq", "installStatus,installDescription,connectionStatus,operationalStatus", 0);
             if (status != ER_OK) {
                 QCC_LogError(status, ("Could not AddMethod"));
                 return status;
@@ -510,6 +510,8 @@ end:
 void ConnectorApp::handleSignal(const ajn::InterfaceDescription::Member* member,
                                 const char* srcPath, ajn::Message& msg)
 {
+    QCC_UNUSED(member);
+
     QCC_DbgHLPrintf((srcPath));
 
     const ajn::MsgArg* returnArgs;
@@ -1014,14 +1016,30 @@ RemotedApp* ConnectorApp::extractRemotedApp(const std::vector<RuleObjectDescript
     }
 
     std::map<RuleObjectPath, std::set<RuleInterface> > remotedRules;
+    
+    ajn::AboutObjectDescription aboutObjDesc = ann->GetObjectDescriptions();
+
+    size_t numPaths = aboutObjDesc.GetPaths(NULL, 0);
+    const char** paths = new const char*[numPaths];
+    aboutObjDesc.GetPaths(paths, numPaths);
 
     ajn::services::AboutClient::ObjectDescriptions::const_iterator bod;
 
-    for (bod = ann->GetObjectDescriptions().begin(); bod !=  ann->GetObjectDescriptions().end(); bod++) {
+    for (size_t i = 0; i < numPaths; i++) {
 
-        const qcc::String objPath = bod->first;
+        const qcc::String objPath = paths[i];
 
-        std::vector<qcc::String> ifacesToMatch = (*bod).second;
+        size_t numInterfaces = aboutObjDesc.GetInterfaces(paths[i], NULL, 0);
+        const char** interfaces = new const char*[numInterfaces];
+        aboutObjDesc.GetInterfaces(paths[i], interfaces, numInterfaces);
+
+        std::vector<qcc::String> ifacesToMatch;
+
+        for( size_t j = 0; j < numInterfaces; j++) {
+            ifacesToMatch.push_back(interfaces[j]);
+        }
+
+        delete[] interfaces;
 
         std::vector<RuleObjectDescription*>::const_iterator moj;
 
@@ -1029,9 +1047,9 @@ RemotedApp* ConnectorApp::extractRemotedApp(const std::vector<RuleObjectDescript
 
             RuleObjectDescription*curr_moj = (*moj);
 
-            RuleObjectPath*manop       = curr_moj->getObjectPath();
-            const std::set<RuleInterface>*manifs      = curr_moj->getInterfaces();
-            int manifsSize  = (int)manifs->size();
+            RuleObjectPath*manop                 = curr_moj->getObjectPath();
+            const std::set<RuleInterface>*manifs = curr_moj->getInterfaces();
+            int manifsSize                       = (int)manifs->size();
 
             //Check object path suitability: if manifest objPath is a prefix of BusObjDesc objPath
             //or both object paths are equal
@@ -1117,6 +1135,7 @@ RemotedApp* ConnectorApp::extractRemotedApp(const std::vector<RuleObjectDescript
         }        //for :: manifest
 
     }        //for :: BusObjectDesc
+    delete[] paths;
 
     int rulesSize = (int)remotedRules.size();
 

@@ -42,6 +42,9 @@ SessionPort GatewayBusListener::getSessionPort()
 
 bool GatewayBusListener::AcceptSessionJoiner(SessionPort sessionPort, const char* joiner, const SessionOpts& opts)
 {
+    QCC_UNUSED(joiner);
+    QCC_UNUSED(opts);
+
     if (sessionPort != m_SessionPort) {
         return false;
     }
@@ -52,6 +55,9 @@ bool GatewayBusListener::AcceptSessionJoiner(SessionPort sessionPort, const char
 
 void GatewayBusListener::SessionJoined(SessionPort sessionPort, SessionId sessionId, const char* joiner)
 {
+    QCC_UNUSED(sessionPort);
+    QCC_UNUSED(joiner);
+
     if (m_Bus) {
         m_Bus->SetSessionListener(sessionId, this);
     }
@@ -63,6 +69,8 @@ void GatewayBusListener::SessionJoined(SessionPort sessionPort, SessionId sessio
 
 void GatewayBusListener::SessionMemberAdded(SessionId sessionId, const char* uniqueName)
 {
+    QCC_UNUSED(uniqueName);
+
     if (std::find(m_SessionIds.begin(), m_SessionIds.end(), sessionId) != m_SessionIds.end()) {
         return;
     }
@@ -71,6 +79,8 @@ void GatewayBusListener::SessionMemberAdded(SessionId sessionId, const char* uni
 
 void GatewayBusListener::SessionMemberRemoved(SessionId sessionId, const char* uniqueName)
 {
+    QCC_UNUSED(uniqueName);
+
     std::vector<SessionId>::iterator it = std::find(m_SessionIds.begin(), m_SessionIds.end(), sessionId);
     if (it != m_SessionIds.end()) {
         m_SessionIds.erase(it);
@@ -79,6 +89,7 @@ void GatewayBusListener::SessionMemberRemoved(SessionId sessionId, const char* u
 
 void GatewayBusListener::SessionLost(SessionId sessionId, SessionLostReason reason)
 {
+    QCC_UNUSED(reason);
     std::vector<SessionId>::iterator it = std::find(m_SessionIds.begin(), m_SessionIds.end(), sessionId);
     if (it != m_SessionIds.end()) {
         m_SessionIds.erase(it);
