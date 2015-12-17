@@ -59,7 +59,7 @@ class RemotedApp : public AnnouncedApp {
      * @param ruleObjDescriptions vector with object description rules for the remoted app
      * @return {@link QStatus}
      */
-    QStatus init(ajn::services::AboutClient::AboutData const& aboutData, const std::vector<RuleObjectDescription*>& ruleObjDescriptions);
+    QStatus init(ajn::AboutData const& aboutData, const std::vector<RuleObjectDescription*>& ruleObjDescriptions);
 
 
     /**

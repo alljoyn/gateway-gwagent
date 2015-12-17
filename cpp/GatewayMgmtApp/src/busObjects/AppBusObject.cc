@@ -21,7 +21,6 @@
 
 namespace ajn {
 namespace gw {
-using namespace services;
 using namespace qcc;
 using namespace gwConsts;
 
@@ -84,7 +83,7 @@ QStatus AppBusObject::createAppInterface(BusAttachment* bus)
         if (status != ER_OK) {
             goto postCreate;
         }
-        status = interfaceDescription->AddSignal(AJ_SIGNAL_APP_STATUS_CHANGED.c_str(), AJ_APP_STATUS_CHANGED_PARAMS.c_str(), AJ_APP_STATUS_CHANGED_PARAM_NAMES.c_str());
+        status = interfaceDescription->AddSignal(AJ_SIGNAL_APP_STATUS_CHANGED.c_str(), AJ_APP_STATUS_CHANGED_PARAMS.c_str(), AJ_APP_STATUS_CHANGED_PARAM_NAMES.c_str(), 0);
         if (status != ER_OK) {
             goto postCreate;
         }
@@ -158,11 +157,11 @@ QStatus AppBusObject::createAppConnectorInterface(BusAttachment* bus)
         if (status != ER_OK) {
             goto postCreate;
         }
-        status = interfaceDescription->AddSignal(AJ_SIGNAL_ACL_UPDATED.c_str(), AJ_ACL_UPDATED_PARAMS.c_str(), AJ_ACL_UPDATED_PARAM_NAMES.c_str());
+        status = interfaceDescription->AddSignal(AJ_SIGNAL_ACL_UPDATED.c_str(), AJ_ACL_UPDATED_PARAMS.c_str(), AJ_ACL_UPDATED_PARAM_NAMES.c_str(), 0);
         if (status != ER_OK) {
             goto postCreate;
         }
-        status = interfaceDescription->AddSignal(AJ_SIGNAL_SHUTDOWN_APP.c_str(), AJ_SHUTDOWN_APP_PARAMS.c_str(), AJ_SHUTDOWN_APP_PARAM_NAMES.c_str());
+        status = interfaceDescription->AddSignal(AJ_SIGNAL_SHUTDOWN_APP.c_str(), AJ_SHUTDOWN_APP_PARAMS.c_str(), AJ_SHUTDOWN_APP_PARAM_NAMES.c_str(), 0);
         if (status != ER_OK) {
             goto postCreate;
         }
@@ -276,6 +275,8 @@ AppBusObject::~AppBusObject()
 
 QStatus AppBusObject::Get(const char* interfaceName, const char* propName, MsgArg& val)
 {
+    QCC_UNUSED(interfaceName);
+
     QCC_DbgTrace(("Get property was called in AppBusObject class:"));
 
     if (0 == strcmp(AJ_PROPERTY_VERSION.c_str(), propName)) {
@@ -286,11 +287,17 @@ QStatus AppBusObject::Get(const char* interfaceName, const char* propName, MsgAr
 
 QStatus AppBusObject::Set(const char* interfaceName, const char* propName, MsgArg& val)
 {
+    QCC_UNUSED(interfaceName);
+    QCC_UNUSED(propName);
+    QCC_UNUSED(val);
+
     return ER_ALLJOYN_ACCESS_PERMISSION_ERROR;
 }
 
 void AppBusObject::GetAppStatus(const InterfaceDescription::Member* member, Message& msg)
 {
+    QCC_UNUSED(member);
+
     QCC_DbgTrace(("Received GetAppStatus method call"));
 
     ajn::MsgArg replyArg[4];
@@ -331,6 +338,8 @@ ReplyError:
 
 void AppBusObject::RestartApp(const InterfaceDescription::Member* member, Message& msg)
 {
+    QCC_UNUSED(member);
+
     QCC_DbgTrace(("Received RestartApp method call"));
 
     uint16_t responseCode = m_ConnectorApp->restartConnectorApp();
@@ -351,6 +360,8 @@ void AppBusObject::RestartApp(const InterfaceDescription::Member* member, Messag
 
 void AppBusObject::GetManifestFile(const InterfaceDescription::Member* member, Message& msg)
 {
+    QCC_UNUSED(member);
+
     QCC_DbgTrace(("Received GetManifestFile method call"));
 
     qcc::String manifestData = m_ConnectorApp->getManifest().getManifestData();
@@ -370,6 +381,8 @@ void AppBusObject::GetManifestFile(const InterfaceDescription::Member* member, M
 
 void AppBusObject::GetManifestInterfaces(const InterfaceDescription::Member* member, Message& msg)
 {
+    QCC_UNUSED(member);
+
     QCC_DbgTrace(("Received GetManifestInterfaces method call"));
 
     ajn::MsgArg replyArg[2];
@@ -488,6 +501,8 @@ QStatus AppBusObject::SendAppStatusChangedSignal()
 
 void AppBusObject::GetMergedAcl(const InterfaceDescription::Member* member, Message& msg)
 {
+    QCC_UNUSED(member);
+
     QCC_DbgTrace(("Received GetMergedAcl method call"));
 
     ajn::MsgArg replyArg[2];
@@ -506,6 +521,8 @@ void AppBusObject::GetMergedAcl(const InterfaceDescription::Member* member, Mess
 
 void AppBusObject::UpdateConnectionStatus(const InterfaceDescription::Member* member, Message& msg)
 {
+    QCC_UNUSED(member);
+
     QCC_DbgTrace(("Received UpdateConnectionStatus method call"));
 
     const ajn::MsgArg* args = 0;
@@ -561,7 +578,7 @@ QStatus AppBusObject::SendShutdownAppSignal()
     }
 
     qcc::String destination = AJ_GW_APP_WKN_PREFIX + m_ConnectorApp->getConnectorId();
-    status = Signal(destination.c_str(), 0, *m_ShutdownApp);
+    status = Signal(destination.c_str(), 0, *m_ShutdownApp, NULL, 0, 0, ALLJOYN_FLAG_SESSIONLESS, NULL);
     if (status != ER_OK) {
         QCC_LogError(status, ("Could not send ShutdownApp Signal"));
     }
@@ -570,6 +587,8 @@ QStatus AppBusObject::SendShutdownAppSignal()
 
 void AppBusObject::CreateAcl(const InterfaceDescription::Member* member, Message& msg)
 {
+    QCC_UNUSED(member);
+
     QCC_DbgTrace(("Received CreateAcl method call"));
 
     qcc::String aclName;
@@ -617,6 +636,8 @@ void AppBusObject::CreateAcl(const InterfaceDescription::Member* member, Message
 
 void AppBusObject::DeleteAcl(const InterfaceDescription::Member* member, Message& msg)
 {
+    QCC_UNUSED(member);
+
     QCC_DbgTrace(("Received DeleteAcl method call"));
 
     const ajn::MsgArg* args = 0;
@@ -654,6 +675,8 @@ void AppBusObject::DeleteAcl(const InterfaceDescription::Member* member, Message
 
 void AppBusObject::ListAcls(const InterfaceDescription::Member* member, Message& msg)
 {
+    QCC_UNUSED(member);
+
     QCC_DbgTrace(("Received ListAcls method call"));
 
     QStatus status;

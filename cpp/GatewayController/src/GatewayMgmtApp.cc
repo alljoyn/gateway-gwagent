@@ -27,7 +27,7 @@ namespace ajn {
 namespace gwc {
 
 
-QStatus GatewayMgmtApp::init(const qcc::String& gwBusName, ajn::services::AboutClient::AboutData const& aboutData)
+QStatus GatewayMgmtApp::init(const qcc::String& gwBusName, ajn::AboutData const& aboutData)
 {
     m_SessionHandler  = this;
     m_Listener = 0;
