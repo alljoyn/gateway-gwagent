@@ -1,5 +1,5 @@
 /******************************************************************************
- * Copyright (c) 2014, AllSeen Alliance. All rights reserved.
+ * Copyright AllSeen Alliance. All rights reserved.
  *
  *    Permission to use, copy, modify, and/or distribute this software for any
  *    purpose with or without fee is hereby granted, provided that the above
@@ -14,15 +14,29 @@
  *    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  ******************************************************************************/
 
-#include <alljoyn/gateway/AnnouncementData.h>
+#include "AJInitializer.h"
+#include <alljoyn/Init.h>
 
-namespace ajn {
-namespace gwc {
-
-AnnouncementData::AnnouncementData(uint16_t portNumber, const ajn::AboutData& aboutData, const ajn::AboutObjectDescription& objectDescriptions) :
-    m_AboutData(aboutData), m_ObjectDescriptions(objectDescriptions), m_PortNumber(portNumber)
+QStatus AJInitializer::Initialize()
 {
+    QStatus status = AllJoynInit();
+    if (status != ER_OK) {
+        return status;
+    }
+#ifdef ROUTER
+    status = AllJoynRouterInit();
+    if (status != ER_OK) {
+        AllJoynShutdown();
+        return status;
+    }
+#endif
+    return status;
+}
 
-}
-}
+AJInitializer::~AJInitializer()
+{
+#ifdef ROUTER
+    AllJoynRouterShutdown();
+#endif
+    AllJoynShutdown();
 }

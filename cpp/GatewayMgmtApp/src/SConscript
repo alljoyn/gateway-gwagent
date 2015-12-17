@@ -19,6 +19,8 @@ import os
 
 gateway_env.Append(CPPPATH = ['$LIBXML2_BASE'])
 gateway_env.Append(LIBS = ['libxml2'])
+if gateway_env['BR'] == 'on':
+    gateway_env.Prepend(LIBS = ['ajrouter'])
 gateway_env.Prepend(LIBS = ['alljoyn'])
 
 srcs = gateway_env.Glob('*.cc')

@@ -58,7 +58,7 @@ class GatewayMgmtApp : public AnnouncedApp {
      * @param aboutData The data sent with the Announcement
      * @return {@link QStatus}
      */
-    QStatus init(const qcc::String& gwBusName, ajn::services::AboutClient::AboutData const& aboutData);
+    QStatus init(const qcc::String& gwBusName, ajn::AboutData const& aboutData);
 
     /**
      * Destructor
