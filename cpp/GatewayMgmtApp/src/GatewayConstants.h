@@ -31,6 +31,7 @@ namespace gwConsts {
 
 static const uint16_t GATEWAY_PORT = 1020;
 static const uint16_t GATEWAY_MANAGEMENT_VERSION = 1;
+static const uint32_t GATEWAY_IFACE_TIMEOUT_INTERVAL = 5000;
 
 static const qcc::String GATEWAY_APPS_DIRECTORY = "/opt/alljoyn/apps";
 

@@ -17,6 +17,7 @@
 #include "AppBusObject.h"
 #include "../GatewayConstants.h"
 #include "AclAdapter.h"
+#include "../GatewayConstants.h"
 #include <alljoyn/gateway/GatewayMgmt.h>
 
 namespace ajn {
@@ -26,7 +27,7 @@ using namespace gwConsts;
 
 AppBusObject::AppBusObject(BusAttachment* bus, GatewayConnectorApp* connectorApp, String const& objectPath, QStatus* status) :
     BusObject(objectPath.c_str()), m_ConnectorApp(connectorApp), m_ObjectPath(objectPath), m_AppStatusChanged(NULL),
-    m_AclUpdated(NULL), m_ShutdownApp(NULL)
+    m_AclUpdated(NULL), m_ShutdownApp(NULL), m_isRegistered(false)
 {
     *status = createAppInterface(bus);
     if (*status != ER_OK) {
@@ -143,7 +144,7 @@ QStatus AppBusObject::createAppConnectorInterface(BusAttachment* bus)
 
     InterfaceDescription* interfaceDescription = (InterfaceDescription*) bus->GetInterface(AJ_GW_APP_CONNECTOR_INTERFACE.c_str());
     if (!interfaceDescription) {
-        status = bus->CreateInterface(AJ_GW_APP_CONNECTOR_INTERFACE.c_str(), interfaceDescription, true);
+        status = bus->CreateInterface(AJ_GW_APP_CONNECTOR_INTERFACE.c_str(), interfaceDescription);
         if (status != ER_OK) {
             goto postCreate;
         }
@@ -560,6 +561,30 @@ QStatus AppBusObject::SendAclUpdatedSignal()
     }
 
     qcc::String destination = AJ_GW_APP_WKN_PREFIX + m_ConnectorApp->getConnectorId();
+
+    bool timedout = false;
+
+    qcc::Timer* pingTimer = new qcc::Timer("GW_APP_PING_TIMER");
+    qcc::AlarmListener* alarmListener = static_cast<qcc::AlarmListener*>(new TimeoutAlarmListener(timedout));
+    qcc::Alarm pingAlarm = qcc::Alarm(GATEWAY_IFACE_TIMEOUT_INTERVAL, alarmListener);
+
+    pingTimer->AddAlarmNonBlocking(pingAlarm);
+    pingTimer->Start();
+
+    while (status != ER_OK && !timedout) {
+        if (m_ConnectorApp->getOperationalStatus() == GW_OS_STOPPED || !m_isRegistered) {
+            break;
+        }
+        status = this->bus->Ping(destination.c_str(), 5);
+        if (status == ER_OK) {
+            break;
+        }
+    }
+
+    pingTimer->Stop();
+    pingTimer->RemoveAlarm(*pingAlarm, false);
+    delete pingTimer;
+
     status = Signal(destination.c_str(), 0, *m_AclUpdated);
     if (status != ER_OK) {
         QCC_LogError(status, ("Could not send AclUpdated Signal"));
@@ -578,7 +603,7 @@ QStatus AppBusObject::SendShutdownAppSignal()
     }
 
     qcc::String destination = AJ_GW_APP_WKN_PREFIX + m_ConnectorApp->getConnectorId();
-    status = Signal(destination.c_str(), 0, *m_ShutdownApp, NULL, 0, 0, ALLJOYN_FLAG_SESSIONLESS, NULL);
+    status = Signal(destination.c_str(), 0, *m_ShutdownApp);
     if (status != ER_OK) {
         QCC_LogError(status, ("Could not send ShutdownApp Signal"));
     }
@@ -688,7 +713,7 @@ void AppBusObject::ListAcls(const InterfaceDescription::Member* member, Message&
     size_t aclInfoSize = 0;
     for (it = acls.begin(); it != acls.end(); it++) {
         status = aclInfo[aclInfoSize++].Set(AJPARAM_ACLS_STRUCT.c_str(), it->first.c_str(), it->second->getAclName().c_str(),
-                                            it->second->getAclStatus(), it->second->getObjectPath().c_str());
+                it->second->getAclStatus(), it->second->getObjectPath().c_str());
         if (status != ER_OK) {
             QCC_LogError(status, ("Can't marshal response to ListAcls - responding with error "));
             MethodReply(msg, status);
