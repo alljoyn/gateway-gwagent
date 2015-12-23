@@ -22,6 +22,7 @@
 #include <alljoyn/gateway/GatewayMgmt.h>
 #include <alljoyn/gateway/GatewayBusListener.h>
 #include "../GatewayConstants.h"
+#include "AJInitializer.h"
 #include "SrpKeyXListener.h"
 #include "GuidUtil.h"
 
@@ -196,16 +197,8 @@ qcc::String appsPolicyDirOption = "--apps-policy-dir=";
 
 int main(int argc, char** argv)
 {
-    if (AllJoynInit() != ER_OK) {
-        AllJoynShutdown();
-        return 1;
-    }
-#ifdef ROUTER
-    if (AllJoynRouterInit() != ER_OK) {
-        AllJoynShutdown();
-        return 1;
-    }
-#endif
+    AJInitializer ajInit;
+
     // Allow CTRL+C to end application
     signal(SIGINT, signal_callback_handler);
     signal(SIGTERM, signal_callback_handler);
@@ -310,9 +303,5 @@ start:
         goto start;
     }
 
-#ifdef ROUTER
-    AllJoynRouterShutdown();
-#endif
-    AllJoynShutdown();
     return 0;
 }
