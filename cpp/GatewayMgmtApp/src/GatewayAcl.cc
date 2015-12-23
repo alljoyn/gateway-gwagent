@@ -156,6 +156,11 @@ AclResponseCode GatewayAcl::updateAclStatus(AclStatus aclStatus)
         if (!success) {
             QCC_DbgHLPrintf(("Could not start the app"));
         }
+        status = m_ConnectorApp->getAppBusObject()->CheckAppPresence();
+        if (status != ER_OK) {
+            success = false;
+            QCC_DbgHLPrintf(("Could not start the app"));
+        }
     } else if (operationalStatus == GW_OS_RUNNING && !m_ConnectorApp->hasActiveAcl()) {
         pthread_t thread;
         bool success = m_ConnectorApp->shutdownConnectorApp(&thread);
