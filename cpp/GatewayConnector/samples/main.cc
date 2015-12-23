@@ -444,7 +444,7 @@ class MyReceiver : public NotificationReceiver {
 };
 
 
-int main(int argc, char** argv) {
+int CDECL_CALL main(int argc, char** argv) {
     QCC_UNUSED(argc);
     QCC_UNUSED(argv);
 
@@ -459,7 +459,7 @@ int main(int argc, char** argv) {
     //====================================
     // Initialize bus
     //====================================
-#ifdef QCC_USING_BD
+#ifdef ROUTER
     PasswordManager::SetCredentials("ALLJOYN_SRP_LOGON", "000000");
 #endif
 

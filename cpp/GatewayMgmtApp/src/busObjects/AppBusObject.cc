@@ -18,6 +18,7 @@
 #include "../GatewayConstants.h"
 #include "AclAdapter.h"
 #include <alljoyn/gateway/GatewayMgmt.h>
+#include <qcc/Mutex.h>
 
 namespace ajn {
 namespace gw {
@@ -26,7 +27,7 @@ using namespace gwConsts;
 
 AppBusObject::AppBusObject(BusAttachment* bus, GatewayConnectorApp* connectorApp, String const& objectPath, QStatus* status) :
     BusObject(objectPath.c_str()), m_ConnectorApp(connectorApp), m_ObjectPath(objectPath), m_AppStatusChanged(NULL),
-    m_AclUpdated(NULL), m_ShutdownApp(NULL)
+    m_AclUpdated(NULL), m_ShutdownApp(NULL), m_isRegistered(false)
 {
     *status = createAppInterface(bus);
     if (*status != ER_OK) {
@@ -143,7 +144,7 @@ QStatus AppBusObject::createAppConnectorInterface(BusAttachment* bus)
 
     InterfaceDescription* interfaceDescription = (InterfaceDescription*) bus->GetInterface(AJ_GW_APP_CONNECTOR_INTERFACE.c_str());
     if (!interfaceDescription) {
-        status = bus->CreateInterface(AJ_GW_APP_CONNECTOR_INTERFACE.c_str(), interfaceDescription, true);
+        status = bus->CreateInterface(AJ_GW_APP_CONNECTOR_INTERFACE.c_str(), interfaceDescription);
         if (status != ER_OK) {
             goto postCreate;
         }
@@ -549,6 +550,35 @@ void AppBusObject::UpdateConnectionStatus(const InterfaceDescription::Member* me
     QCC_DbgPrintf(("Connection Status updated successfully"));
 }
 
+QStatus AppBusObject::CheckAppPresence()
+{
+    qcc::String destination = AJ_GW_APP_WKN_PREFIX + m_ConnectorApp->getConnectorId();
+    QStatus status = ER_FAIL;
+
+    if (m_ConnectorApp->hasActiveAcl()) {
+        qcc::Timer pingTimer("GW_APP_PING_TIMER");
+
+        TimeoutAlarmListener alarmListener;
+        AlarmListener* al = &alarmListener;
+        Alarm pingAlarm(GATEWAY_IFACE_TIMEOUT_INTERVAL, al);
+
+        pingTimer.AddAlarmNonBlocking(pingAlarm);
+        pingTimer.Start();
+
+        while (status != ER_OK && alarmListener.IsTimedout()) {
+            status = bus->Ping(destination.c_str(), 5);
+            if (status == ER_OK) {
+                break;
+            }
+        }
+
+        pingTimer.Stop();
+        pingTimer.RemoveAlarm(*pingAlarm, false);
+    }
+
+    return status;
+}
+
 QStatus AppBusObject::SendAclUpdatedSignal()
 {
     QStatus status = ER_BUS_PROPERTY_VALUE_NOT_SET;
@@ -560,6 +590,7 @@ QStatus AppBusObject::SendAclUpdatedSignal()
     }
 
     qcc::String destination = AJ_GW_APP_WKN_PREFIX + m_ConnectorApp->getConnectorId();
+
     status = Signal(destination.c_str(), 0, *m_AclUpdated);
     if (status != ER_OK) {
         QCC_LogError(status, ("Could not send AclUpdated Signal"));
@@ -688,7 +719,7 @@ void AppBusObject::ListAcls(const InterfaceDescription::Member* member, Message&
     size_t aclInfoSize = 0;
     for (it = acls.begin(); it != acls.end(); it++) {
         status = aclInfo[aclInfoSize++].Set(AJPARAM_ACLS_STRUCT.c_str(), it->first.c_str(), it->second->getAclName().c_str(),
-                                            it->second->getAclStatus(), it->second->getObjectPath().c_str());
+                it->second->getAclStatus(), it->second->getObjectPath().c_str());
         if (status != ER_OK) {
             QCC_LogError(status, ("Can't marshal response to ListAcls - responding with error "));
             MethodReply(msg, status);

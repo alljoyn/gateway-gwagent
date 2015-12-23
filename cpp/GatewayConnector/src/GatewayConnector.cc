@@ -55,6 +55,8 @@ QStatus GatewayConnector::init()
         return status;
     }
 
+    m_RemoteAppAccess = new ProxyBusObject(*m_Bus, GW_MGMNT_APP_WKN, m_ObjectPath.c_str(), 0);
+
     const InterfaceDescription* ifc = initInterface(status);
     if (ER_OK != status) {
         return status;
@@ -73,12 +75,6 @@ QStatus GatewayConnector::init()
     }
 
     status = m_Bus->AddMatch(GW_CONNECTOR_SIG_MATCH);
-    if (ER_OK != status) {
-        return status;
-    }
-
-    m_RemoteAppAccess = new ProxyBusObject(*m_Bus, GW_MGMNT_APP_WKN, m_ObjectPath.c_str(), 0);
-    status = m_RemoteAppAccess->AddInterface(*ifc);
     if (ER_OK != status) {
         return status;
     }
