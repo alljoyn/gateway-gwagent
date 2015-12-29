@@ -63,7 +63,7 @@ BusAttachment* GatewayController::getBusAttachment()
 
 QStatus GatewayController::createGateway(const qcc::String& gatewayBusName, const ajn::AboutObjectDescription& objectDescs, const ajn::AboutData& aboutData, GatewayMgmtApp** gatewayMgmtApp)
 {
-    if(objectDescs.HasInterface(AJ_OBJECTPATH_PREFIX.c_str(), AJ_GATEWAYCONTROLLER_APPMGMT_INTERFACE.c_str()) == true) {
+    if (objectDescs.HasInterface(AJ_OBJECTPATH_PREFIX.c_str(), AJ_GATEWAYCONTROLLER_APPMGMT_INTERFACE.c_str()) == true) {
         *gatewayMgmtApp = new GatewayMgmtApp();
         QStatus status = (*gatewayMgmtApp)->init(gatewayBusName, aboutData);
 

@@ -726,7 +726,7 @@ void AppBusObject::ListAcls(const InterfaceDescription::Member* member, Message&
     size_t aclInfoSize = 0;
     for (it = acls.begin(); it != acls.end(); it++) {
         status = aclInfo[aclInfoSize++].Set(AJPARAM_ACLS_STRUCT.c_str(), it->first.c_str(), it->second->getAclName().c_str(),
-                it->second->getAclStatus(), it->second->getObjectPath().c_str());
+                                            it->second->getAclStatus(), it->second->getObjectPath().c_str());
         if (status != ER_OK) {
             QCC_LogError(status, ("Can't marshal response to ListAcls - responding with error "));
             MethodReply(msg, status);

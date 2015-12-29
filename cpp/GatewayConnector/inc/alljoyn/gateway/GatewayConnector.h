@@ -84,7 +84,8 @@ class GatewayConnector : public MessageReceiver {
      */
     virtual void receiveGetMergedAclAsync(QStatus unmarshalStatus, GatewayMergedAcl* response) {
         QCC_UNUSED(unmarshalStatus);
-        QCC_UNUSED(response);}
+        QCC_UNUSED(response);
+    }
 
     /**
      * Handler for the mergedAcl signal
