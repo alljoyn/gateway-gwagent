@@ -27,6 +27,26 @@ namespace ajn {
 namespace gw {
 
 /**
+ * TimeoutAlarmListener - AlarmListener implementation for use as a timeout
+ */
+
+class TimeoutAlarmListener : public qcc::AlarmListener {
+  public:
+    TimeoutAlarmListener(bool& timedout) : AlarmListener(), m_timedout(timedout) { };
+
+  private:
+    bool& m_timedout;
+
+    void AlarmTriggered(const qcc::Alarm& alarm, QStatus reason)
+    {
+        QCC_UNUSED(alarm);
+        QCC_UNUSED(reason);
+        m_timedout = true;
+    }
+};
+
+
+/**
  * AppBusObject - BusObject for ConnectorApp
  */
 class AppBusObject : public BusObject  {

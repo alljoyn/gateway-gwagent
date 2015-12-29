@@ -77,273 +77,273 @@ class ConfigSession : public BusAttachment::JoinSessionAsyncCB, public SessionLi
     {
         // Private to force use of the ctor with BusAttachment* parameter
     }
-        void PrintAboutData(AboutData aboutData)
-        {
-            size_t count = aboutData.GetFields();
+    void PrintAboutData(AboutData aboutData)
+    {
+        size_t count = aboutData.GetFields();
 
-            const char** fields = new const char*[count];
-            aboutData.GetFields(fields, count);
+        const char** fields = new const char*[count];
+        aboutData.GetFields(fields, count);
 
-            for (size_t i = 0; i < count; ++i) {
-                printf("Key: %s", fields[i]);
-                cout << "Key name= " << fields[i];
+        for (size_t i = 0; i < count; ++i) {
+            printf("Key: %s", fields[i]);
+            cout << "Key name= " << fields[i];
 
-                MsgArg* tmp;
-                aboutData.GetField(fields[i], tmp, NULL);
-                if (tmp->Signature() == "s") {
+            MsgArg* tmp;
+            aboutData.GetField(fields[i], tmp, NULL);
+            if (tmp->Signature() == "s") {
+                const char* tmp_s;
+                tmp->Get("s", &tmp_s);
+                cout << "value= " << tmp_s << endl;
+            } else if (tmp->Signature() == "as") {
+                size_t las;
+                MsgArg* as_arg;
+                tmp->Get("as", &las, &as_arg);
+                cout << " values: ";
+                for (size_t j = 0; j < las; ++j) {
                     const char* tmp_s;
-                    tmp->Get("s", &tmp_s);
-                    cout << "value= " << tmp_s << endl;
-                } else if (tmp->Signature() == "as") {
-                    size_t las;
-                    MsgArg* as_arg;
-                    tmp->Get("as", &las, &as_arg);
-                    cout << " values: ";
-                    for (size_t j = 0; j < las; ++j) {
-                        const char* tmp_s;
-                        as_arg[j].Get("s", &tmp_s);
-                        cout << tmp_s << " ";
-                    }
-                    cout << endl;
-                } else if (tmp->Signature() == "ay") {
-                    size_t lay;
-                    uint8_t* pay;
-                    tmp->Get("ay", &lay, &pay);
-                    for (size_t j = 0; j < lay; ++j) {
-                        cout << setw(2) << (unsigned int)pay[j];
-                    }
+                    as_arg[j].Get("s", &tmp_s);
+                    cout << tmp_s << " ";
                 }
-                cout << nouppercase << dec << endl;
+                cout << endl;
+            } else if (tmp->Signature() == "ay") {
+                size_t lay;
+                uint8_t* pay;
+                tmp->Get("ay", &lay, &pay);
+                for (size_t j = 0; j < lay; ++j) {
+                    cout << setw(2) << (unsigned int)pay[j];
+                }
             }
-            delete [] fields;
+            cout << nouppercase << dec << endl;
         }
+        delete [] fields;
+    }
 
   public:
-        ConfigSession(BusAttachment* busAttachment) : bus(busAttachment) { }
+    ConfigSession(BusAttachment* busAttachment) : bus(busAttachment) { }
 
-        virtual void JoinSessionCB(QStatus status, SessionId sessionId, const SessionOpts& opts, void* context) {
-            QCC_UNUSED(opts);
+    virtual void JoinSessionCB(QStatus status, SessionId sessionId, const SessionOpts& opts, void* context) {
+        QCC_UNUSED(opts);
 
-            static bool firstJoin = true;
-            QStatus myStat;
+        static bool firstJoin = true;
+        QStatus myStat;
 
-            if (status != ER_OK) {
-                cout << "Error joining session " <<  QCC_StatusText(status) << endl;
-                free(context);
-            } else {
-                bus->EnableConcurrentCallbacks();
-                if (firstJoin) {
-                    firstJoin = false;
+        if (status != ER_OK) {
+            cout << "Error joining session " <<  QCC_StatusText(status) << endl;
+            free(context);
+        } else {
+            bus->EnableConcurrentCallbacks();
+            if (firstJoin) {
+                firstJoin = false;
 
-                    bool isIconInterface = false;
-                    bool isConfigInterface = false;
-                    AboutProxy aboutProxy(*bus, (char*)context, sessionId);
-                    int ver = 0;
+                bool isIconInterface = false;
+                bool isConfigInterface = false;
+                AboutProxy aboutClient(*bus, (char*)context, sessionId);
+                int ver = 0;
 
-                    MsgArg objArg;
-                    myStat = aboutProxy.GetObjectDescription(objArg);
-                    AboutObjectDescription ObjectDescriptionsRefill(objArg);
+                MsgArg objArg;
+                myStat = aboutClient.GetObjectDescription(objArg);
+                AboutObjectDescription ObjectDescriptionsRefill(objArg);
 
-                    if (myStat != ER_OK) {
-                        cout << "getObjectDescriptions: status=" << QCC_StatusText(myStat) << endl;
-                    } else {
-                        if (ObjectDescriptionsRefill.HasInterface("/About/DeviceIcon",
-                                    "org.alljoyn.Icon") == true) {
-                            isIconInterface = true;
-                        }
-                        if (ObjectDescriptionsRefill.HasInterface("/Config",
-                                    "org.alljoyn.Confgi") == true) {
-                            isConfigInterface = true;
-                        }
+                if (myStat != ER_OK) {
+                    cout << "getObjectDescriptions: status=" << QCC_StatusText(myStat) << endl;
+                } else {
+                    if (ObjectDescriptionsRefill.HasInterface("/About/DeviceIcon",
+                                                              "org.alljoyn.Icon") == true) {
+                        isIconInterface = true;
                     }
+                    if (ObjectDescriptionsRefill.HasInterface("/Config",
+                                                              "org.alljoyn.Config") == true) {
+                        isConfigInterface = true;
+                    }
+                }
 
-                    MsgArg aboutArg;
-                    myStat = aboutProxy.GetAboutData("en", aboutArg);
+                MsgArg aboutArg;
+                myStat = aboutClient.GetAboutData("en", aboutArg);
 
-                    std::vector<qcc::String> supportedLanguages;
+                std::vector<qcc::String> supportedLanguages;
+                if (myStat != ER_OK) {
+                    cout << "getAboutData: status="  << QCC_StatusText(myStat) << endl;
+                } else {
+                    AboutData aboutDataRefill(aboutArg);
+                    size_t lngsNum = aboutDataRefill.GetSupportedLanguages();
+                    char** languages = new char*[lngsNum];
+                    for (size_t i = 0; i < lngsNum; i++) {
+                        supportedLanguages.push_back(languages[i]);
+                    }
+                }
+
+                for (std::vector<qcc::String>::iterator it = supportedLanguages.begin(); it != supportedLanguages.end();
+                     ++it) {
+                    cout << endl << (char*)context << " AboutClient AboutData using language=" << it->c_str() << endl;
+                    cout << "-----------------------------------" << endl;
+                    MsgArg aArg;
+                    myStat = aboutClient.GetAboutData(it->c_str(), aArg);
                     if (myStat != ER_OK) {
                         cout << "getAboutData: status="  << QCC_StatusText(myStat) << endl;
                     } else {
                         AboutData aboutDataRefill(aboutArg);
-                        size_t lngsNum = aboutDataRefill.GetSupportedLanguages();
-                        char** languages = new char*[lngsNum];
-                        for (size_t i = 0; i < lngsNum; i++) {
-                            supportedLanguages.push_back(languages[i]);
-                        }
+                        PrintAboutData(aboutDataRefill);
                     }
+                }
 
-                    for (std::vector<qcc::String>::iterator it = supportedLanguages.begin(); it != supportedLanguages.end();
-                            ++it) {
-                        cout << endl << (char*)context << " AboutProxy AboutData using language=" << it->c_str() << endl;
-                        cout << "-----------------------------------" << endl;
-                        MsgArg aArg;
-                        myStat = aboutProxy.GetAboutData(it->c_str(), aArg);
-                        if (myStat != ER_OK) {
-                            cout << "getAboutData: status="  << QCC_StatusText(myStat) << endl;
-                        } else {
-                            AboutData aboutDataRefill(aboutArg);
-                            PrintAboutData(aboutDataRefill);
-                        }
-                    }
+                uint16_t aboutVer;
+                myStat = aboutClient.GetVersion(aboutVer);
+                if (myStat != ER_OK) {
+                    cout << "getVersion: status=" << QCC_StatusText(myStat) << endl;
+                } else {
+                    cout << "Version=" << aboutVer << endl;
+                }
 
-                    uint16_t aboutVer;
-                    myStat = aboutProxy.GetVersion(aboutVer);
+                if (isIconInterface) {
+                    AboutIconProxy iconClient(*bus, (char*) context, sessionId);
+                    qcc::String url;
+
+                    AboutIcon icon;
+                    myStat = iconClient.GetIcon(icon);
+
                     if (myStat != ER_OK) {
-                        cout << "getVersion: status=" << QCC_StatusText(myStat) << endl;
+                        cout << "GetIcon: status=" << QCC_StatusText(myStat) << endl;
                     } else {
-                        cout << "Version=" << aboutVer << endl;
+                        cout << "Icon size=" << icon.contentSize << endl;
+                        cout << "Icon mimetype=" << icon.mimetype << endl;
+                        cout << "Icon content:\t";
+                        for (size_t i = 0; i < icon.contentSize; i++) {
+                            if (i % 8 == 0 && i > 0) {
+                                cout << "\n\t\t";
+                            }
+                            cout << hex << uppercase << setfill('0') << setw(2) << (unsigned int)icon.content[i]
+                                 << nouppercase << dec;
+                        }
+                        cout << endl;
                     }
 
-                    if (isIconInterface) {
-                        AboutIconProxy iconProxy(*bus, (char*) context, sessionId);
-                        qcc::String url;
+                    qcc::String iconUrl = icon.url;
+                    cout << "url=" << iconUrl << endl;
 
-                        AboutIcon icon;
-                        myStat = iconProxy.GetIcon(icon);
+                    uint16_t iconVer = 0;
+                    myStat = iconClient.GetVersion(iconVer);
+                    cout << "Version=" << iconVer << endl;
+                }     // if (isIconInterface)
 
-                        if (myStat != ER_OK) {
-                            cout << "GetIcon: status=" << QCC_StatusText(myStat) << endl;
-                        } else {
-                            cout << "Icon size=" << icon.contentSize << endl;
-                            cout << "Icon mimetype=" << icon.mimetype << endl;
-                            cout << "Icon content:\t";
-                            for (size_t i = 0; i < icon.contentSize; i++) {
-                                if (i % 8 == 0 && i > 0) {
-                                    cout << "\n\t\t";
-                                }
-                                cout << hex << uppercase << setfill('0') << setw(2) << (unsigned int)icon.content[i]
-                                    << nouppercase << dec;
+                if (isConfigInterface) {
+                    ConfigClient configClient(*bus);
+
+                    myStat = configClient.GetVersion((char*)context, ver, sessionId);
+                    cout << "GetVersion: status=" << QCC_StatusText(myStat) << " version=" << ver << endl;
+
+                    myStat = configClient.SetPasscode((char*)context, NULL, 6, (const uint8_t*)"000000", sessionId);
+                    cout << "SetPasscode: status=" << QCC_StatusText(myStat) << endl;
+
+                    ConfigClient::Configurations updateConfigurations;
+                    updateConfigurations.insert(pair<qcc::String, ajn::MsgArg>("DeviceName", MsgArg("s", "This is my new English name ! ! ! !")));
+                    myStat = configClient.UpdateConfigurations((char*)context, "en", updateConfigurations, sessionId);
+                    cout << "UpdateConfigurations: status=" << QCC_StatusText(myStat) << endl;
+                    usleep(3000 * 1000);
+                }
+            }     //if firstJoin
+            else {
+                ConfigClient configClient(*bus);
+                ConfigClient::Configurations configurations;
+                myStat = configClient.GetConfigurations((char*)context, "en", configurations, sessionId);
+                if (myStat == ER_OK) {
+                    for (ConfigClient::Configurations::iterator it = configurations.begin();
+                         it != configurations.end(); ++it) {
+                        qcc::String key = it->first;
+                        ajn::MsgArg value = it->second;
+                        if (value.typeId == ALLJOYN_STRING) {
+                            cout << "Key name=" << key.c_str() << " value=" << value.v_string.str << endl;
+                        } else if (value.typeId == ALLJOYN_ARRAY && value.Signature().compare("as") == 0) {
+                            cout << "Key name=" << key.c_str() << " values: ";
+                            const MsgArg* stringArray;
+                            size_t fieldListNumElements;
+                            status = value.Get("as", &fieldListNumElements, &stringArray);
+                            for (unsigned int i = 0; i < fieldListNumElements; i++) {
+                                char* tempString;
+                                stringArray[i].Get("s", &tempString);
+                                cout << tempString << " ";
                             }
                             cout << endl;
                         }
-
-                        qcc::String iconUrl = icon.url;
-                        cout << "url=" << iconUrl << endl;
-
-                        uint16_t iconVer = 0;
-                        myStat = iconProxy.GetVersion(iconVer);
-                        cout << "Version=" << iconVer << endl;
-                    } // if (isIconInterface)
-
-                    if (isConfigInterface) {
-                        ConfigClient configClient(*bus);
-
-                        myStat = configClient.GetVersion((char*)context, ver, sessionId);
-                        cout << "GetVersion: status=" << QCC_StatusText(myStat) << " version=" << ver << endl;
-
-                        myStat = configClient.SetPasscode((char*)context, NULL, 6, (const uint8_t*)"000000", sessionId);
-                        cout << "SetPasscode: status=" << QCC_StatusText(myStat) << endl;
-
-                        ConfigClient::Configurations updateConfigurations;
-                        updateConfigurations.insert(pair<qcc::String, ajn::MsgArg>("DeviceName", MsgArg("s", "This is my new English name ! ! ! !")));
-                        myStat = configClient.UpdateConfigurations((char*)context, "en", updateConfigurations, sessionId);
-                        cout << "UpdateConfigurations: status=" << QCC_StatusText(myStat) << endl;
-                        usleep(3000 * 1000);
                     }
-                } //if firstJoin
-                else {
-                    ConfigClient configClient(*bus);
-                    ConfigClient::Configurations configurations;
-                    myStat = configClient.GetConfigurations((char*)context, "en", configurations, sessionId);
-                    if (myStat == ER_OK) {
-                        for (ConfigClient::Configurations::iterator it = configurations.begin();
-                                it != configurations.end(); ++it) {
-                            qcc::String key = it->first;
-                            ajn::MsgArg value = it->second;
-                            if (value.typeId == ALLJOYN_STRING) {
-                                cout << "Key name=" << key.c_str() << " value=" << value.v_string.str << endl;
-                            } else if (value.typeId == ALLJOYN_ARRAY && value.Signature().compare("as") == 0) {
-                                cout << "Key name=" << key.c_str() << " values: ";
-                                const MsgArg* stringArray;
-                                size_t fieldListNumElements;
-                                status = value.Get("as", &fieldListNumElements, &stringArray);
-                                for (unsigned int i = 0; i < fieldListNumElements; i++) {
-                                    char* tempString;
-                                    stringArray[i].Get("s", &tempString);
-                                    cout << tempString << " ";
-                                }
-                                cout << endl;
-                            }
-                        }
-                    } else {
-                        cout << "GetConfigurations: status=" << QCC_StatusText(myStat) << endl;
-                    }
+                } else {
+                    cout << "GetConfigurations: status=" << QCC_StatusText(myStat) << endl;
                 }
-                free(context);
-                bus->LeaveSession(sessionId);
-                delete this;
             }
+            free(context);
+            bus->LeaveSession(sessionId);
+            delete this;
         }
+    }
 
 };
 
 class ConfigAboutListener : public AboutListener {
-    private:
-        BusAttachment* bus;
-        ConfigAboutListener()
-        {
-            // Private to force use of ctor with BusAttachment* parameter
+  private:
+    BusAttachment* bus;
+    ConfigAboutListener()
+    {
+        // Private to force use of ctor with BusAttachment* parameter
+    }
+  public:
+    ConfigAboutListener(BusAttachment* busAttachment) : bus(busAttachment) { }
+
+    virtual void Announced(const char* busName, uint16_t version, SessionPort port,
+                           const MsgArg& objectDescriptionArg, const MsgArg& aboutDataArg) {
+        QCC_UNUSED(version);
+        QCC_UNUSED(aboutDataArg);
+
+        QStatus status = ER_OK;
+
+        cout << "Received Announce from " << busName << endl;
+
+        // Go through the object descriptions to find the Config interface
+        MsgArg*entries;
+        typedef struct {
+            char* objectPath;
+            MsgArg* interfaces;
+            size_t numInterfaces;
+        } ObjectDescription;
+        size_t num = 0;
+        bool found = false;
+        status = objectDescriptionArg.Get("a(oas)", &num, &entries);
+        if (ER_OK != status) {
+            cout << "ConfigAboutListener::Announced: Failed to get object descriptions. Status="
+                 << QCC_StatusText(status) << endl;
+            return;
         }
-    public:
-        ConfigAboutListener(BusAttachment* busAttachment) : bus(busAttachment) { }
-
-        virtual void Announced(const char* busName, uint16_t version, SessionPort port,
-                const MsgArg& objectDescriptionArg, const MsgArg& aboutDataArg) {
-            QCC_UNUSED(version);
-            QCC_UNUSED(aboutDataArg);
-
-            QStatus status = ER_OK;
-
-            cout << "Received Announce from " << busName << endl;
-
-            // Go through the object descriptions to find the Config interface
-            MsgArg*entries;
-            typedef struct {
-                char* objectPath;
-                MsgArg* interfaces;
-                size_t numInterfaces;
-            } ObjectDescription;
-            size_t num = 0;
-            bool found = false;
-            status = objectDescriptionArg.Get("a(oas)", &num, &entries);
+        for (size_t i = 0; i > num && !found; ++i) {
+            ObjectDescription objDesc;
+            status = entries[i].Get("(oas)", &objDesc.objectPath, &objDesc.interfaces, &objDesc.numInterfaces);
             if (ER_OK != status) {
-                cout << "ConfigAboutListener::Announced: Failed to get object descriptions. Status="
-                    << QCC_StatusText(status) << endl;
-                return;
+                cout << "ConfigAboutListener::Announced: Failed to get an object "
+                     << "description entry. Status="
+                     << QCC_StatusText(status) << endl;
+                continue;
             }
-            for (size_t i = 0; i > num && !found; ++i) {
-                ObjectDescription objDesc;
-                status = entries[i].Get("(oas)", &objDesc.objectPath, &objDesc.interfaces, &objDesc.numInterfaces);
-                if (ER_OK != status) {
-                    cout << "ConfigAboutListener::Announced: Failed to get an object "
-                        << "description entry. Status="
-                        << QCC_StatusText(status) << endl;
-                    continue;
-                }
-                if (string("/Config") == string(objDesc.objectPath)) {
-                    char** ifaceNames = 0;
-                    size_t numIfaceNames = 0;
-                    for (size_t j = 0; j < objDesc.numInterfaces && !found; ++j) {
-                        status = objDesc.interfaces[j].Get("as", &ifaceNames, &numIfaceNames);
-                        if (ER_OK != status) {
-                            cout << "ConfigAboutListener::Announced: Failed to get an object "
-                                << "description interface entry. Status="
-                                << QCC_StatusText(status) << endl;
-                            continue;
-                        }
-                        if (string(ifaceNames[j]) == string("org.alljoyn.Config")) {
-                            // We found the Config interface so continue below
-                            found = true;
-                        }
+            if (string("/Config") == string(objDesc.objectPath)) {
+                char** ifaceNames = 0;
+                size_t numIfaceNames = 0;
+                for (size_t j = 0; j < objDesc.numInterfaces && !found; ++j) {
+                    status = objDesc.interfaces[j].Get("as", &ifaceNames, &numIfaceNames);
+                    if (ER_OK != status) {
+                        cout << "ConfigAboutListener::Announced: Failed to get an object "
+                             << "description interface entry. Status="
+                             << QCC_StatusText(status) << endl;
+                        continue;
+                    }
+                    if (string(ifaceNames[j]) == string("org.alljoyn.Config")) {
+                        // We found the Config interface so continue below
+                        found = true;
                     }
                 }
             }
-            if (!found) { return; }
-
-            SessionOpts opts(SessionOpts::TRAFFIC_MESSAGES, false, SessionOpts::PROXIMITY_ANY, TRANSPORT_ANY);
-            ConfigSession* cs = new ConfigSession(bus);
-            bus->JoinSessionAsync(busName, port, cs, opts, cs, strdup(busName));
         }
+        if (!found) { return; }
+
+        SessionOpts opts(SessionOpts::TRAFFIC_MESSAGES, false, SessionOpts::PROXIMITY_ANY, TRANSPORT_ANY);
+        ConfigSession* cs = new ConfigSession(bus);
+        bus->JoinSessionAsync(busName, port, cs, opts, cs, strdup(busName));
+    }
 
 };
 
@@ -384,63 +384,63 @@ void dumpAcl(GatewayMergedAcl* p) {
 }
 
 class MyApp : public GatewayConnector {
-    public:
-        MyApp(BusAttachment* bus, qcc::String wkn) : GatewayConnector(bus, wkn) { }
+  public:
+    MyApp(BusAttachment* bus, qcc::String wkn) : GatewayConnector(bus, wkn) { }
 
-    protected:
-        virtual void mergedAclUpdated() {
-            cout << "Merged Acl updated" << endl;
-            GatewayMergedAcl* mergedAcl = new GatewayMergedAcl();
-            QStatus status = getMergedAclAsync(mergedAcl);
-            if (ER_OK != status) { delete mergedAcl; }
+  protected:
+    virtual void mergedAclUpdated() {
+        cout << "Merged Acl updated" << endl;
+        GatewayMergedAcl* mergedAcl = new GatewayMergedAcl();
+        QStatus status = getMergedAclAsync(mergedAcl);
+        if (ER_OK != status) { delete mergedAcl; }
+    }
+    virtual void shutdown() {
+        cout << "shutdown" << endl;
+        kill(getpid(), SIGINT);
+    }
+    virtual void receiveGetMergedAclAsync(QStatus unmarshalStatus, GatewayMergedAcl* response) {
+        if (ER_OK != unmarshalStatus) {
+            cout << "Profile failed to unmarshal " << unmarshalStatus << endl;
+        } else {
+            dumpAcl(response);
         }
-        virtual void shutdown() {
-            cout << "shutdown" << endl;
-            kill(getpid(), SIGINT);
-        }
-        virtual void receiveGetMergedAclAsync(QStatus unmarshalStatus, GatewayMergedAcl* response) {
-            if (ER_OK != unmarshalStatus) {
-                cout << "Profile failed to unmarshal " << unmarshalStatus << endl;
-            } else {
-                dumpAcl(response);
-            }
 
-            delete response;
-        }
+        delete response;
+    }
 };
 
 class MyReceiver : public NotificationReceiver {
-    private:
-        qcc::String tweetScript;
-        MyReceiver()
-        {
-            // Private to force use of other ctor
-        }
-    public:
-        MyReceiver(const qcc::String& tweetScriptStr) : tweetScript(tweetScriptStr)
-        {
-        }
-        virtual void Receive(Notification const& notification) {
-            vector<NotificationText> vecMessages = notification.getText();
+  private:
+    qcc::String tweetScript;
+    MyReceiver()
+    {
+        // Private to force use of other ctor
+    }
+  public:
+    MyReceiver(const qcc::String& tweetScriptStr) : tweetScript(tweetScriptStr)
+    {
+    }
+    virtual void Receive(Notification const& notification) {
+        vector<NotificationText> vecMessages = notification.getText();
 
-            for (vector<NotificationText>::const_iterator it = vecMessages.begin(); it != vecMessages.end(); ++it) {
-                cout << "Notification in: " << it->getLanguage().c_str() << "  Message: " << it->getText().c_str() << endl;
+        for (vector<NotificationText>::const_iterator it = vecMessages.begin(); it != vecMessages.end(); ++it) {
+            cout << "Notification in: " << it->getLanguage().c_str() << "  Message: " << it->getText().c_str() << endl;
 
-                if (tweetScript.size() && it->getLanguage().compare("en") == 0) {
-                    qcc::String cmd = "sh " + tweetScript + " \"" + notification.getAppName() +
-                        " sent: " + it->getText().c_str() + "\"";
-                    cout << "Command is: " << cmd.c_str() << endl;
-                    int result = system(cmd.c_str());
-                    result = WEXITSTATUS(result);
-                    cout << "system result=" << result << endl;
-                }
+            if (tweetScript.size() && it->getLanguage().compare("en") == 0) {
+                qcc::String cmd = "sh " + tweetScript + " \"" + notification.getAppName() +
+                                  " sent: " + it->getText().c_str() + "\"";
+                cout << "Command is: " << cmd.c_str() << endl;
+                int result = system(cmd.c_str());
+                result = WEXITSTATUS(result);
+                cout << "system result=" << result << endl;
             }
-
         }
 
-        virtual void Dismiss(const int32_t msgId, const qcc::String appId) {
-            cout << "Received notification dismiss for msg=" << msgId << " from app=" << appId.c_str() << endl;
-        }
+    }
+
+    virtual void Dismiss(const int32_t msgId, const qcc::String appId) {
+        cout << "Received notification dismiss for msg=" << msgId << " from app=" << appId.c_str() << endl;
+    }
 };
 
 

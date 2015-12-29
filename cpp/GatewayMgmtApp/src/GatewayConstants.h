@@ -33,6 +33,7 @@ static const uint16_t GATEWAY_PORT = 1020;
 static const uint16_t GATEWAY_MANAGEMENT_VERSION = 1;
 
 static const qcc::String GATEWAY_APPS_DIRECTORY = "/opt/alljoyn/apps";
+static const qcc::String GATEWAY_APPID_FILE_PATH = "/opt/alljoyn/gwagent/appId.txt";
 
 static const qcc::String AJPARAM_EMPTY = "";
 static const qcc::String AJPARAM_BOOL = "b";
