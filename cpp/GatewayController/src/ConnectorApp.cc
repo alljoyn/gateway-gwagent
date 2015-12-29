@@ -82,7 +82,9 @@ QStatus ConnectorApp::init(const qcc::String& gwBusName, ajn::MsgArg*appInfo)
         m_ObjectPath = ObjectPath;
 
         m_AppVersion = AppVersion;
-    } else { QCC_LogError(status, ("MsgArg get failed")); return status; }
+    } else {
+        QCC_LogError(status, ("MsgArg get failed")); return status;
+    }
 
     QCC_DbgTrace(("In ConnectorApp Constructor"));
 
@@ -983,10 +985,9 @@ QStatus ConnectorApp::release() {
     return ER_OK;
 }
 
-QStatus
-ConnectorApp::extractRemotedApps(const std::vector<RuleObjectDescription*>& remotedServices,
-                                 std::vector<AnnouncementData*> const& announcements,
-                                 std::vector<RemotedApp*>& remotedApps) {
+QStatus ConnectorApp::extractRemotedApps(const std::vector<RuleObjectDescription*>& remotedServices,
+                                         std::vector<AnnouncementData*> const& announcements,
+                                         std::vector<RemotedApp*>& remotedApps) {
 
     std::vector<AnnouncementData*>::const_iterator annIter;
     QStatus status = ER_OK;
@@ -1016,7 +1017,7 @@ RemotedApp* ConnectorApp::extractRemotedApp(const std::vector<RuleObjectDescript
     }
 
     std::map<RuleObjectPath, std::set<RuleInterface> > remotedRules;
-    
+
     ajn::AboutObjectDescription aboutObjDesc = ann->GetObjectDescriptions();
 
     size_t numPaths = aboutObjDesc.GetPaths(NULL, 0);
@@ -1035,7 +1036,7 @@ RemotedApp* ConnectorApp::extractRemotedApp(const std::vector<RuleObjectDescript
 
         std::vector<qcc::String> ifacesToMatch;
 
-        for( size_t j = 0; j < numInterfaces; j++) {
+        for (size_t j = 0; j < numInterfaces; j++) {
             ifacesToMatch.push_back(interfaces[j]);
         }
 
