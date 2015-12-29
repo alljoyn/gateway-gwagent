@@ -13,6 +13,7 @@
  *    ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  *    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  ******************************************************************************/
+#include <fstream>
 #include <signal.h>
 #include <alljoyn/PasswordManager.h>
 #include <alljoyn/AboutData.h>
@@ -96,6 +97,8 @@ QStatus prepareBusListener()
 
 QStatus fillAboutData()
 {
+    using namespace gwConsts;
+
     if (!aboutData) {
         return ER_BAD_ARG_1;
     }
@@ -105,7 +108,24 @@ QStatus fillAboutData()
     qcc::String deviceId;
     GuidUtil::GetInstance()->GetDeviceIdString(&deviceId);
     qcc::String appId;
-    GuidUtil::GetInstance()->GenerateGUID(&appId);
+    std::fstream ifs(GATEWAY_APPID_FILE_PATH.c_str(), std::fstream::in);
+    if (ifs) {
+        std::string tmpStr;
+        if (ifs.peek() != std::fstream::traits_type::eof()) {
+            std::getline(ifs, tmpStr);
+            appId = tmpStr.c_str();
+        }
+    } else {
+        QCC_DbgPrintf(("AppId file does not exists. A new AppId will be crated.\n"));
+        ifs.open(GATEWAY_APPID_FILE_PATH.c_str(), std::fstream::out | std::fstream::app);
+
+        GuidUtil::GetInstance()->GenerateGUID(&appId);
+
+        ifs << appId.c_str();
+        ifs.flush();
+    }
+
+    ifs.close();
 
     status = aboutData->SetDeviceId(deviceId.c_str());
     if (status != ER_OK) {

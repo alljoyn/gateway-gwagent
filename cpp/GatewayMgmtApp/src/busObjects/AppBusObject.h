@@ -33,18 +33,18 @@ namespace gw {
  */
 
 class TimeoutAlarmListener : public qcc::AlarmListener {
-    public:
-        TimeoutAlarmListener(bool& timedout) : AlarmListener(), m_timedout(timedout) {};
+  public:
+    TimeoutAlarmListener(bool& timedout) : AlarmListener(), m_timedout(timedout) { };
 
-    private:
-        bool& m_timedout;
+  private:
+    bool& m_timedout;
 
-        void AlarmTriggered(const qcc::Alarm& alarm, QStatus reason)
-        {
-            QCC_UNUSED(alarm);
-            QCC_UNUSED(reason);
-            m_timedout = true;
-        }
+    void AlarmTriggered(const qcc::Alarm& alarm, QStatus reason)
+    {
+        QCC_UNUSED(alarm);
+        QCC_UNUSED(reason);
+        m_timedout = true;
+    }
 };
 
 
