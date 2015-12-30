@@ -25,6 +25,7 @@ gateway_env.Install('$GWMA_DISTDIR/bin', File('manifest.xsd'))
 gateway_env.Install('$GWMA_DISTDIR/bin', File('installPackage.sh'))
 gateway_env.Install('$GWMA_DISTDIR/bin', File('removePackage.sh'))
 gateway_env.Install('$GWMA_DISTDIR/bin', File('gwagent-config.xml'))
+gateway_env.Install('$GWMA_DISTDIR/bin', File('gwApp-config.xml'))
 
 # Build docs
 installedDocs = gateway_env.SConscript('docs/SConscript', exports = ['gateway_env'])
