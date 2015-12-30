@@ -13,6 +13,7 @@
  *    ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  *    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  ******************************************************************************/
+#include <fstream>
 #include <signal.h>
 #include <alljoyn/PasswordManager.h>
 #include <alljoyn/AboutData.h>
@@ -22,6 +23,7 @@
 #include <alljoyn/gateway/GatewayMgmt.h>
 #include <alljoyn/gateway/GatewayBusListener.h>
 #include "../GatewayConstants.h"
+#include "GatewayMgmtAppConfig.h"
 #include "AJInitializer.h"
 #include "SrpKeyXListener.h"
 #include "GuidUtil.h"
@@ -131,6 +133,8 @@ QStatus prepareBusListener()
 
 QStatus fillAboutData()
 {
+    using namespace gwConsts;
+
     if (!aboutData) {
         return ER_BAD_ARG_1;
     }
@@ -140,13 +144,34 @@ QStatus fillAboutData()
     qcc::String deviceId;
     GuidUtil::GetInstance()->GetDeviceIdString(&deviceId);
     qcc::String appId;
-    GuidUtil::GetInstance()->GenerateGUID(&appId);
+    std::fstream ifs(GATEWAY_APPID_FILE_PATH.c_str(), std::fstream::in);
+    if (ifs) {
+        std::string tmpStr;
+        if (ifs.peek() != std::fstream::traits_type::eof()) {
+            std::getline(ifs, tmpStr);
+            appId = tmpStr.c_str();
+        }
+    } else {
+        QCC_DbgPrintf(("AppId file does not exists. A new AppId will be created.\n"));
+        ifs.open(GATEWAY_APPID_FILE_PATH.c_str(), std::fstream::out | std::fstream::app);
+
+        GuidUtil::GetInstance()->GenerateGUID(&appId);
+
+        ifs << appId.c_str();
+        ifs.flush();
+    }
+
+    ifs.close();
+
+    GatewayMgmtAppConfig appConfig;
+    appConfig.loadFromFile(gwConsts::GATEWAY_DEFAULT_MGMT_APP_CONF_PATH);
+    const char* language = appConfig.getLanguage().c_str();
 
     status = aboutData->SetDeviceId(deviceId.c_str());
     if (status != ER_OK) {
         return status;
     }
-    status = aboutData->SetDeviceName("AllJoyn Gateway Agent", "en");
+    status = aboutData->SetDeviceName(appConfig.getDeviceName().c_str(), language);
     if (status != ER_OK) {
         return status;
     }
@@ -154,31 +179,31 @@ QStatus fillAboutData()
     if (status != ER_OK) {
         return status;
     }
-    status = aboutData->SetAppName("AllJoyn Gateway Configuration Manager", "en");
+    status = aboutData->SetAppName(appConfig.getAppName().c_str(), "en");
     if (status != ER_OK) {
         return status;
     }
-    status = aboutData->SetDefaultLanguage("en");
+    status = aboutData->SetDefaultLanguage(appConfig.getLanguage().c_str());
     if (status != ER_OK) {
         return status;
     }
-    status = aboutData->SetSupportUrl("http://www.allseenalliance.org");
+    status = aboutData->SetSupportUrl(language);
     if (status != ER_OK) {
         return status;
     }
-    status = aboutData->SetManufacturer("AllSeen Alliance", "en");
+    status = aboutData->SetManufacturer(appConfig.getManufacturer().c_str(), language);
     if (status != ER_OK) {
         return status;
     }
-    status = aboutData->SetModelNumber("1.0");
+    status = aboutData->SetModelNumber(appConfig.getModelNumber().c_str());
     if (status != ER_OK) {
         return status;
     }
-    status = aboutData->SetSoftwareVersion("1.0");
+    status = aboutData->SetSoftwareVersion(appConfig.getSoftwareVersion().c_str());
     if (status != ER_OK) {
         return status;
     }
-    status = aboutData->SetDescription("AllJoyn Gateway Configuration Manager Application", "en");
+    status = aboutData->SetDescription(appConfig.getDescription().c_str(), language);
     if (status != ER_OK) {
         return status;
     }
