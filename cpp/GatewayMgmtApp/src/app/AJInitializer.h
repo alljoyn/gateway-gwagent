@@ -23,15 +23,13 @@
  * class AJInitializer
  * Utility class for handling AllJoyn lifecycle methods
  */
-
 class AJInitializer {
   public:
     /**
-     * AJInitializer 
      * Calls AllJoynInit(). If bundled router is enabled it also calls AllJoynRouterInit()
-     * 
+     * @return ER_OK if initialization succeeded
      */
-    AJInitializer();
+    QStatus Initialize();
 
     /**
      * ~AJInitializer

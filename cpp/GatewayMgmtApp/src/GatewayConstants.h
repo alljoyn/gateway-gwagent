@@ -35,6 +35,7 @@ static const uint32_t GATEWAY_IFACE_TIMEOUT_INTERVAL = 5000;
 
 static const qcc::String GATEWAY_APPS_DIRECTORY = "/opt/alljoyn/apps";
 static const qcc::String GATEWAY_APPID_FILE_PATH = "/opt/alljoyn/gwagent/appId.txt";
+static const qcc::String GATEWAY_DEFAULT_MGMT_APP_CONF_PATH = "/opt/alljoyn/gwagent/gwApp-config.xml";
 
 static const qcc::String AJPARAM_EMPTY = "";
 static const qcc::String AJPARAM_BOOL = "b";
