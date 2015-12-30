@@ -17,15 +17,20 @@
 #include "AJInitializer.h"
 #include <alljoyn/Init.h>
 
-AJInitializer::AJInitializer()
+QStatus AJInitializer::Initialize()
 {
-    m_Status = AllJoynInit();
-
+    QStatus status = AllJoynInit();
+    if (status != ER_OK) {
+        return status;
+    }
 #ifdef ROUTER
-    if (m_Status == ER_OK) {
-        m_Status = AllJoynRouterInit();
+    status = AllJoynRouterInit();
+    if (status != ER_OK) {
+        AllJoynShutdown();
+        return status;
     }
 #endif
+    return status;
 }
 
 AJInitializer::~AJInitializer()

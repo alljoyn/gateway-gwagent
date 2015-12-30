@@ -18,22 +18,19 @@
 #define AJINITIALIZER_H_
 
 #include <alljoyn/Status.h>
-#include <qcc/String.h>
+
 /**
  * class AJInitializer
  * Utility class for handling AllJoyn lifecycle methods
  */
-
 class AJInitializer {
   public:
     /**
-     * AJInitializer 
      * Calls AllJoynInit(). If bundled router is enabled it also calls AllJoynRouterInit()
-     * 
+     * @return ER_OK if initialization succeeded
      */
-    AJInitializer();
-    
-//    AJInitializer(qcc::String configFilePath);
+    QStatus Initialize();
+
     /**
      * ~AJInitializer
      * Calls AllJoynRouterShutdown() if bundled router is enabled and then calls AllJoynShutdown()
