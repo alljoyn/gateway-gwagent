@@ -15,6 +15,10 @@
  ******************************************************************************/
 
 #include "alljoyn/gateway/GatewayConnector.h"
+#include <algorithm>
+#include <regex>
+#include "../../GatewayMgmtApp/src/GatewayConstants.h"
+
 #define GW_CONNECTOR_IFC_NAME "org.alljoyn.gwagent.connector.App"
 #define GW_CONNECTOR_SIG_MATCH "type='signal',interface='org.alljoyn.gwagent.connector.App'"
 #define GW_MGMNT_APP_WKN "org.alljoyn.GWAgent.GMApp"
@@ -23,12 +27,10 @@ using namespace ajn::gw;
 using namespace ajn;
 
 GatewayConnector::GatewayConnector(BusAttachment* bus, qcc::String const& appName) :
-    m_Bus(bus), m_ObjectPath("/gw/"),
+    m_Bus(bus), m_AppName(appName), m_ObjectPath("/gw/"),
     m_WellKnownName("org.alljoyn.GWAgent.Connector."),
     m_RemoteAppAccess(NULL)
 {
-    m_ObjectPath.append(appName);
-    m_WellKnownName.append(appName);
 }
 
 GatewayConnector::~GatewayConnector()
@@ -39,6 +41,19 @@ GatewayConnector::~GatewayConnector()
 QStatus GatewayConnector::init()
 {
     QStatus status = ER_OK;
+    if (std::regex_match(m_AppName.c_str(), std::regex("[a-z_][a-z0-9_-]*[$]"))) {
+        std::string tmpWKN = m_AppName.c_str();
+
+        tmpWKN.erase(std::remove(tmpWKN.begin(), tmpWKN.end(), '-'), tmpWKN.end());
+        m_ObjectPath.append(tmpWKN.c_str());
+        m_WellKnownName.append(tmpWKN.c_str());
+
+    } else {
+        status = ER_FAIL;
+        QCC_LogError(status, ("Connector App Name has an invalid format. Name must match regex [a-z_][a-z0-9_-]*[$]"));
+
+        return status;
+    }
 
     m_RemoteAppAccess = new ProxyBusObject(*m_Bus, GW_MGMNT_APP_WKN, m_ObjectPath.c_str(), 0);
 

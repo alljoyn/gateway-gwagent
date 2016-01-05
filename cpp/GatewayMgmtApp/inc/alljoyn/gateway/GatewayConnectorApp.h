@@ -41,7 +41,7 @@ class GatewayConnectorApp {
      * @param connectorId - Id of app
      * @param manifest - manifest of app
      */
-    GatewayConnectorApp(qcc::String const& connectorId, GatewayConnectorAppManifest const& manifest);
+    GatewayConnectorApp(qcc::String const& connectorId, qcc::String const& appName, GatewayConnectorAppManifest const& manifest);
 
     /**
      * Destructor for the GatewayConnectorApp
@@ -98,6 +98,12 @@ class GatewayConnectorApp {
      * @return connectorId
      */
     const qcc::String& getConnectorId() const;
+
+    /**
+     * Get the appName of the Connector App
+     * @return appName
+     */
+    const qcc::String& getAppName() const;
 
     /**
      * Get the connection status of the Connector App
@@ -220,6 +226,11 @@ class GatewayConnectorApp {
      * The connectorId of the App
      */
     qcc::String m_ConnectorId;
+
+    /**
+     * The App name of the app
+     */
+    qcc::String m_AppName;
 
     /**
      * The ObjectPath of the App
