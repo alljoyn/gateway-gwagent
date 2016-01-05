@@ -37,7 +37,7 @@ namespace gw {
 using namespace gwConsts;
 using namespace qcc;
 
-GatewayConnectorApp::GatewayConnectorApp(qcc::String const& connectorId, GatewayConnectorAppManifest const& manifest) : m_ConnectorId(connectorId),
+GatewayConnectorApp::GatewayConnectorApp(qcc::String const& connectorId, qcc::String const& appName, GatewayConnectorAppManifest const& manifest) : m_ConnectorId(connectorId), m_AppName(appName),
     m_ObjectPath(AJ_GW_OBJECTPATH + "/" + connectorId), m_ConnectionStatus(GW_CS_NOT_INITIALIZED), m_OperationalStatus(GW_OS_STOPPED),
     m_InstallStatus(GW_IS_INSTALLED), m_InstallDescription(""), m_Manifest(manifest), m_AppBusObject(NULL), m_ProcessId(-1)
 {
@@ -150,6 +150,11 @@ const qcc::String& GatewayConnectorApp::getConnectorId() const
     return m_ConnectorId;
 }
 
+const qcc::String& GatewayConnectorApp::getAppName() const
+{
+    return m_AppName;
+}
+
 ConnectionStatus GatewayConnectorApp::getConnectionStatus() const
 {
     return m_ConnectionStatus;
@@ -208,7 +213,7 @@ QStatus GatewayConnectorApp::loadAcls()
 {
     DIR* dir;
     struct dirent* entry;
-    qcc::String dirName = GATEWAY_APPS_DIRECTORY + "/" + m_ConnectorId + "/acls";
+    qcc::String dirName = GATEWAY_APPS_DIRECTORY + "/" + m_AppName + "/acls";
     if ((dir = opendir(dirName.c_str())) == NULL) {
         QCC_DbgHLPrintf(("Could not open gatewayApp Profile directory"));
         return ER_OK;
@@ -389,7 +394,7 @@ bool GatewayConnectorApp::startConnectorApp()
             _Exit(0);
         }
 
-        qcc::String appDirectory = GATEWAY_APPS_DIRECTORY + "/" + m_ConnectorId + "/bin";
+        qcc::String appDirectory = GATEWAY_APPS_DIRECTORY + "/" + m_AppName + "/bin";
         rc = chdir(appDirectory.c_str());
         if (rc != 0) {
             QCC_DbgHLPrintf(("Could not change directories to the app's directory"));
@@ -518,7 +523,7 @@ AclResponseCode GatewayConnectorApp::deleteAcl(qcc::String const& aclId)
     GatewayAcl* acl = it->second;
     AclStatus aclStatus = acl->getAclStatus();
 
-    int rc = remove((GATEWAY_APPS_DIRECTORY + "/" + m_ConnectorId + "/acls/" + aclId).c_str());
+    int rc = remove((GATEWAY_APPS_DIRECTORY + "/" + m_AppName + "/acls/" + aclId).c_str());
     if (rc != 0) {
         QCC_DbgHLPrintf(("Could not remove acl successfully"));
         return GW_ACL_RC_PERSISTENCE_ERROR;

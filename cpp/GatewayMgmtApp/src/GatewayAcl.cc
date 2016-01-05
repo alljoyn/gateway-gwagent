@@ -562,7 +562,7 @@ QStatus GatewayAcl::writeToFile()
     if (rc < 0) {
         goto exit;
     }
-    rc = xmlSaveFormatFile((GATEWAY_APPS_DIRECTORY + "/" + m_ConnectorApp->getConnectorId() + "/acls/" + m_AclId).c_str(), doc, 1);
+    rc = xmlSaveFormatFile((GATEWAY_APPS_DIRECTORY + "/" + m_ConnectorApp->getAppName() + "/acls/" + m_AclId).c_str(), doc, 1);
     if (rc < 0) {
         status = ER_WRITE_ERROR;
         goto exit;

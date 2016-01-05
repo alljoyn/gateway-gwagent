@@ -21,6 +21,7 @@
 #include "busObjects/AppMgmtBusObject.h"
 #include "GatewayConstants.h"
 #include <dirent.h>
+#include <algorithm>
 
 namespace ajn {
 namespace gw {
@@ -157,8 +158,8 @@ QStatus GatewayConnectorAppManager::loadConnectorApps()
 
     while ((entry = readdir(dir)) != NULL) {
 
-        qcc::String connectorId(entry->d_name);
-        if (connectorId.compare(".") == 0 || connectorId.compare("..") == 0) {
+        qcc::String appName(entry->d_name);
+        if (appName.compare(".") == 0 || appName.compare("..") == 0) {
             continue;
         }
 
@@ -167,15 +168,20 @@ QStatus GatewayConnectorAppManager::loadConnectorApps()
             continue;
         }
 
+        std::string tmpConnId = appName.c_str();
+        tmpConnId.erase(std::remove(tmpConnId.begin(), tmpConnId.end(), '-'), tmpConnId.end());
+        qcc::String connectorId = tmpConnId.c_str();
+
         GatewayConnectorAppManifest manifest;
-        qcc::String manifestFileName = GATEWAY_APPS_DIRECTORY + "/" + connectorId + "/Manifest.xml";
+        qcc::String manifestFileName = GATEWAY_APPS_DIRECTORY + "/" + appName + "/Manifest.xml";
         QStatus status = manifest.parseManifestFile(manifestFileName);
         if (status != ER_OK) {
             QCC_LogError(status, ("Could not parse the manifest file for app: %s", connectorId.c_str()));
             continue;
         }
 
-        GatewayConnectorApp* gatewayApp = new GatewayConnectorApp(connectorId, manifest);
+
+        GatewayConnectorApp* gatewayApp = new GatewayConnectorApp(connectorId, appName, manifest);
         m_ConnectorApps.insert(std::pair<qcc::String, GatewayConnectorApp*>(connectorId, gatewayApp));
     }
     closedir(dir);

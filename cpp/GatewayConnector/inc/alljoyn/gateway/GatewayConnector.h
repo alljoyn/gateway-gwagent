@@ -134,6 +134,12 @@ class GatewayConnector : public MessageReceiver {
     BusAttachment* m_Bus;
 
     /**
+     * The appName of the Connector App
+     */
+    qcc::String m_AppName;
+
+
+    /**
      * The objectPath of the busObject
      */
     qcc::String m_ObjectPath;
