@@ -110,7 +110,7 @@ void AppMgmtBusObject::GetInstalledApps(const InterfaceDescription::Member* memb
     std::vector<MsgArg> appInfo(apps.size());
     size_t appInfoSize = 0;
     for (it = apps.begin(); it != apps.end(); it++) {
-        status = appInfo[appInfoSize++].Set(AJPARAM_INSTALLED_APPS_INFO.c_str(), it->second->getConnectorId().c_str(),
+        status = appInfo[appInfoSize++].Set(AJPARAM_INSTALLED_APPS_INFO.c_str(), it->second->getAppName().c_str(),
                                             it->second->getManifest().getFriendlyName().c_str(),
                                             it->second->getObjectPath().c_str(),
                                             it->second->getManifest().getVersion().c_str());
