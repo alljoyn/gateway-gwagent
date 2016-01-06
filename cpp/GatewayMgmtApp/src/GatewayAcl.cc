@@ -164,6 +164,12 @@ AclResponseCode GatewayAcl::updateAclStatus(AclStatus aclStatus)
         }
     }
 
+    status = m_ConnectorApp->updatePolicyManager();
+    if (status != ER_OK) {
+        QCC_DbgPrintf(("Could not update Policies for app %s", m_ConnectorApp->getConnectorId().c_str()));
+        return GW_ACL_RC_POLICYMANAGER_ERROR;
+    }
+
     status = m_ConnectorApp->getAppBusObject()->SendAclUpdatedSignal();
     if (status != ER_OK) {
         QCC_LogError(status, ("Sending AclUpdated Failed"));
