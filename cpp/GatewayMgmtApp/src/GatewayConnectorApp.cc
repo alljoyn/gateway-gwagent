@@ -255,6 +255,16 @@ void GatewayConnectorApp::sigChildReceived()
     if (status != ER_OK) {
         QCC_LogError(status, ("Could not send AppStatusChangedSignal"));
     }
+
+    GatewayRouterPolicyManager* policyManager = GatewayMgmt::getInstance()->getRouterPolicyManager();
+    if (!policyManager) {
+        QCC_LogError(ER_FAIL, ("PolicyManager not defined"));
+    }
+
+    bool success = policyManager->removeConnectorAppRules(m_ConnectorId);
+    if (!success) {
+        QCC_LogError(ER_FAIL, ("Updating the Policies failed"));
+    }
 }
 
 void* GatewayConnectorApp::Stop(void* arg)
