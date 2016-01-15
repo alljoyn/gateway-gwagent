@@ -25,6 +25,8 @@
 #include "AJInitializer.h"
 #include "SrpKeyXListener.h"
 #include "GuidUtil.h"
+#include <string.h>
+#include <pthread.h>
 
 using namespace ajn;
 using namespace gw;
@@ -39,16 +41,36 @@ GatewayBusListener*  busListener = NULL;
 SrpKeyXListener* keyListener = NULL;
 static volatile sig_atomic_t s_interrupt = false;
 static volatile sig_atomic_t s_restart = false;
+// Passed to DeamonMain to mark when to stop daemon
+static sig_atomic_t quit = 0;
+
+void GWSignalHandler(int sig) {
+    switch (sig) {
+        case SIGINT:
+        case SIGTERM:
+            s_interrupt = true;
+            s_restart = false;
+            break;
+        case SIGCHLD:
+            // Continue main thread ig SIGCHLD is received
+            s_restart = true;
+            GatewayMgmt::sigChildCallback(SIGCHLD);
+            break;
+    }
+}
+
+
+extern int DaemonMain(int argc, char** argv, char* serviceConfig, sig_atomic_t* quitFlag);
+
+struct daemonArguments {
+    int argc;
+    char** argv;
+    char* configPath;
+};
 
 static void DaemonDisconnectHandler()
 {
     s_restart = true;
-}
-
-void WaitForSigInt(void) {
-    while (s_interrupt == false && s_restart == false) {
-        usleep(100 * 1000);
-    }
 }
 
 QStatus prepareBusAttachment()
@@ -183,34 +205,61 @@ void cleanup()
     }
 }
 
-void signal_callback_handler(int32_t signum)
+void *runDaemon(void *threadarg)
 {
-    if (signum == SIGCHLD) {
-        signal(SIGCHLD, signal_callback_handler); //reset signal handler
-        GatewayMgmt::sigChildCallback(signum);
-    } else {
-        s_interrupt = true;
-    }
+    struct daemonArguments *daemonArgs;
+    daemonArgs = (struct daemonArguments*) threadarg;
+    DaemonMain(daemonArgs->argc, daemonArgs->argv, NULL, &quit);
+    s_restart = false;
+    s_interrupt = true;
+    pthread_exit(NULL);
+    return NULL;
 }
-qcc::String policyFileOption = "--gwagent-policy-file=";
+
 qcc::String appsPolicyDirOption = "--apps-policy-dir=";
+qcc::String policyFileOption = "--gwagent-policy-file=";
+qcc::String routingNodeConfigFileOption = "--config-file=";
 
 int main(int argc, char** argv)
 {
+    sigset_t sigmask, waitmask;
+    struct sigaction act, oldact;
+    qcc::String configPath;
+
     AJInitializer ajInit;
     if (ajInit.Status() != ER_OK) {
         return 1;
     }
 
-    // Allow CTRL+C to end application
-    signal(SIGINT, signal_callback_handler);
-    signal(SIGTERM, signal_callback_handler);
-    signal(SIGCHLD, signal_callback_handler);
+    /* 
+     * Set specific attributes of posix signal handlers to ensure that
+     * the main thread catches all signals
+     */
 
-start:
+    act.sa_handler = GWSignalHandler;
+    sigemptyset(&act.sa_mask);
+    act.sa_flags = SA_SIGINFO | SA_RESTART;
+
+    sigaction(SIGINT, &act, &oldact);
+    sigaction(SIGTERM, &act, &oldact);
+    sigaction(SIGCHLD, &act, &oldact);
+    pthread_attr_t attr;
+
+    // Ensure that deamonThread is detached but joinable
+    pthread_attr_init(&attr);
+    pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
+
+    struct daemonArguments daemonArgs;
+    daemonArgs.argc = argc;
+    daemonArgs.argv = argv;
+    daemonArgs.configPath = argv[1];
+    pthread_t daemonThread;
+    pthread_mutex_t exitMutex;
+    pthread_create(&daemonThread, &attr, &runDaemon, (void*) &daemonArgs);
 
     // Initialize GatewayMgmt object
     gatewayMgmt = GatewayMgmt::getInstance();
+
 
     for (int i = 1; i < argc; i++) {
         qcc::String arg(argv[i]);
@@ -287,8 +336,8 @@ start:
         return 1;
     }
 
-    AboutObj aboutObj(*bus);
-    status = aboutObj.Announce(SERVICE_PORT, *aboutData);
+    AboutObj* aboutObj = new AboutObj(*bus);
+    status = aboutObj->Announce(SERVICE_PORT, *aboutData);
     if (status != ER_OK) {
         QCC_LogError(status, ("Could not announce."));
         cleanup();
@@ -297,13 +346,38 @@ start:
 
     QCC_DbgPrintf(("Finished initializing Gateway App"));
 
-    WaitForSigInt();
+    // Suspend any signals until termination
+    sigfillset(&waitmask);
+    sigdelset(&waitmask, SIGINT);
+    sigdelset(&waitmask, SIGTERM);
+    sigdelset(&waitmask, SIGCHLD);
 
-    cleanup();
+start:
+    sigsuspend(&waitmask);
     if (s_restart) {
         s_restart = false;
         goto start;
     }
+
+    // Ensure that cleanup finishes for the Gateway Agent first
+    pthread_mutex_lock(&exitMutex);
+
+    // Any AllJoyn object that uses a BusAttachment must be
+    // destroyed before AJInitializer is destroyed
+    delete aboutObj;
+
+    pthread_sigmask(SIG_UNBLOCK, &sigmask, NULL);
+
+    cleanup();
+
+    // Flag the daemon to stop
+    quit = 1;
+
+    pthread_mutex_unlock(&exitMutex);
+
+    // Wait for the daemon to stop
+    pthread_attr_destroy(&attr);
+    pthread_join(daemonThread, NULL);
 
     return 0;
 }

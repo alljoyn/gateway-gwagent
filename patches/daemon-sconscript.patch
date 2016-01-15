@@ -1,0 +1,31 @@
+--- alljoyn_core/router/posix/SConscript	2016-01-22 10:05:50.100842118 -0600
++++ SConscript	2016-01-22 10:05:17.210842831 -0600
+@@ -16,23 +16,16 @@
+ Import('router_env', 'router_objs', 'srobj')
+ 
+ # Build the posix daemon and service launcher helper.
+-if router_env['OS'] != 'darwin':
+-    daemon_env = router_env.Clone()
+-    if daemon_env['OS'] != 'android':
+-        daemon_env.Append(LIBS = 'cap')
+-    daemon = daemon_env.Program('alljoyn-daemon', ['daemon-main.cc'] + srobj + router_objs)
+-else:
+-    daemon = []
++daemon = []
+ 	
+ #
+ # On Android, build a static library that can be linked into a JNI dynamic 
+ # library to implement the daemon as a Service
+ #
+-if router_env['OS'] == 'android':
+-   libenv = router_env.Clone(CCFLAGS = '-DROUTER_LIB')
+-   libenv.Object(target = 'alljoyn-daemon', source = 'daemon-main.cc')
+-   libdaemon = libenv.StaticLibrary(['alljoyn-daemon'] + srobj + router_objs)
+-   dlibs = libenv.Install('$CPP_DISTDIR/lib', libdaemon)
++libenv = router_env.Clone(CCFLAGS = '-DROUTER_LIB')
++libenv.Object(target = 'alljoyn-daemon', source = 'daemon-main.cc')
++libdaemon = libenv.StaticLibrary(['alljoyn-daemon'] + srobj + router_objs)
++dlibs = libenv.Install('$CPP_DISTDIR/lib', libdaemon)
+ 
+ #progs = daemon + servicehelper
+ progs = daemon
