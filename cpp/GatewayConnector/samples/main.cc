@@ -448,11 +448,12 @@ int CDECL_CALL main(int argc, char** argv) {
     QCC_UNUSED(argc);
     QCC_UNUSED(argv);
 
-    AJInitializer ajInit;
-    ajInit.Initialize();
+    if (AllJoynInit() != ER_OK) {
+        return 1; 
+    }
 
     signal(SIGINT, signal_callback_handler);
-    BusAttachment bus("ConnectorApp", true);
+    BusAttachment* bus = new BusAttachment("ConnectorApp", true);
     CommonBusListener busListener;
     SrpKeyXListener keyListener;
 
@@ -463,13 +464,13 @@ int CDECL_CALL main(int argc, char** argv) {
     PasswordManager::SetCredentials("ALLJOYN_SRP_LOGON", "000000");
 #endif
 
-    QStatus status = bus.Start();
+    QStatus status = bus->Start();
     if (ER_OK != status) {
         cout << "Error starting bus: " << QCC_StatusText(status) << endl;
         return 1;
     }
 
-    status = bus.Connect();
+    status = bus->Connect();
     if (ER_OK != status) {
         cout << "Error connecting bus: " << QCC_StatusText(status) << endl;
         return 1;
@@ -489,12 +490,12 @@ int CDECL_CALL main(int argc, char** argv) {
     //====================================
     keyListener.setPassCode("000000");
     qcc::String keystore = "/opt/alljoyn/apps/" + wellknownName + "/store/.alljoyn_keystore.ks";
-    status = bus.EnablePeerSecurity("ALLJOYN_SRP_KEYX ALLJOYN_ECDHE_PSK", &keyListener, keystore.c_str(), false);
+    status = bus->EnablePeerSecurity("ALLJOYN_SRP_KEYX ALLJOYN_ECDHE_PSK", &keyListener, keystore.c_str(), false);
 
     //====================================
     // Initialize GwConnector interface
     //====================================
-    MyApp myApp(&bus, wellknownName.c_str());
+    MyApp myApp(bus, wellknownName.c_str());
     status = myApp.init();
     if (ER_OK != status) {
         cout << "Error connecting bus: " << QCC_StatusText(status) << endl;
@@ -506,7 +507,7 @@ int CDECL_CALL main(int argc, char** argv) {
     //====================================
     NotificationService* notificationService = NotificationService::getInstance();
     MyReceiver receiver(tweetScript);
-    status = notificationService->initReceive(&bus, &receiver);
+    status = notificationService->initReceive(bus, &receiver);
     if (ER_OK != status) {
         cout << "Error initializing notification receiver: " << QCC_StatusText(status) << endl;
         notificationService->shutdown();
@@ -523,7 +524,7 @@ int CDECL_CALL main(int argc, char** argv) {
     GuidUtil::GetInstance()->GenerateGUID(&appid);
 
     AboutData aboutData("en");
-    AboutObj aboutObj(bus);
+    AboutObj* aboutObj = new AboutObj(*bus);
     DeviceNamesType deviceNames;
     deviceNames.insert(pair<qcc::String, qcc::String>("en", "ConnectorSampleDevice"));
     status = CommonSampleUtil::fillAboutData(&aboutData, appid, "ConnectorSample", deviceid, deviceNames);
@@ -531,13 +532,13 @@ int CDECL_CALL main(int argc, char** argv) {
         cout << "Could not fill AboutData. " <<  QCC_StatusText(status) << endl;
         return 1;
     }
-    status = CommonSampleUtil::prepareAboutService(&bus, &aboutData, &aboutObj, &busListener, 900);
+    status = CommonSampleUtil::prepareAboutService(bus, &aboutData, aboutObj, &busListener, 900);
     if (status != ER_OK) {
         cout << "Could not set up the AboutService." << endl;
         notificationService->shutdown();
         return 1;
     }
-    NotificationSender* notificationSender = notificationService->initSend(&bus, &aboutData);
+    NotificationSender* notificationSender = notificationService->initSend(bus, &aboutData);
     if (!notificationSender) {
         cout << "Could not initialize Sender" << endl;
         notificationService->shutdown();
@@ -548,8 +549,8 @@ int CDECL_CALL main(int argc, char** argv) {
     //====================================
     // Register for config announcements
     //====================================
-    ConfigAboutListener aboutListener(&bus);
-    bus.RegisterAboutListener(aboutListener);
+    ConfigAboutListener aboutListener(bus);
+    bus->RegisterAboutListener(aboutListener);
 
     //====================================
     // Here we go
@@ -613,6 +614,11 @@ int CDECL_CALL main(int argc, char** argv) {
 
     notificationService->shutdownSender();
     notificationService->shutdown();
+    
+    delete aboutObj;
+    delete bus;
+
+    AllJoynShutdown();
 
     return exitManager.getSignum();
 }
