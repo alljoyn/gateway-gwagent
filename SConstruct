@@ -14,9 +14,18 @@
 
 import os
 
+gatewayDir = os.getcwd()
 env = SConscript('../../core/alljoyn/build_core/SConscript')
 
 vars = Variables()
+vars.Add(EnumVariable('BR', 'Have bundled router built-in for C++ test samples', 'on', allowed_values=('on', 'off')))
+
+if env['BR'] == 'on':
+    os.chdir("../../core/alljoyn/alljoyn_core/router/posix")
+    os.system("patch daemon-main.cc < " + gatewayDir + "/patches/daemon-main.patch")
+    os.system("patch SConscript < " + gatewayDir + "/patches/daemon-sconscript.patch")
+    os.chdir(gatewayDir)
+
 vars.Add('BINDINGS', 'Bindings to build (comma separated list): cpp, java', 'cpp,java')
 vars.Add(PathVariable('ALLJOYN_DISTDIR',
                       'Directory containing a built AllJoyn Core dist directory.',
@@ -56,3 +65,16 @@ env['bindings'] = set([ b.strip() for b in env['BINDINGS'].split(',') ])
 
 env.SConscript('SConscript')
 
+def unpatch(target, source, env):
+    if env['BR'] == 'on':
+        os.chdir("../../core/alljoyn/alljoyn_core/router/posix")
+        os.system("patch -R daemon-main.cc < " + gatewayDir + "/patches/daemon-main.patch")
+        os.system("patch -R SConscript < " + gatewayDir + "/patches/daemon-sconscript.patch")
+        os.chdir(gatewayDir)
+    return None
+
+
+unpatch_command = env.Command('unpatch', [], unpatch)
+
+env.Depends(unpatch_command, 'build')
+env.Default(unpatch_command)

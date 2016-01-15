@@ -324,6 +324,13 @@ bool GatewayConnectorApp::hasActiveAcl()
 bool GatewayConnectorApp::shutdownConnectorApp()
 {
     QStatus status = m_AppBusObject->SendShutdownAppSignal();
+
+    //Unblock signals to make sure that any child process can catch them
+    sigset_t sigmask;
+    sigfillset(&sigmask);
+    sigdelset(&sigmask, SIGSEGV);
+    sigdelset(&sigmask, SIGCHLD);
+    pthread_sigmask(SIG_UNBLOCK, &sigmask, NULL);
     if (status != ER_OK) {
         QCC_DbgHLPrintf(("Could not send shutdownAppSignal"));
     } else {
@@ -344,6 +351,13 @@ bool GatewayConnectorApp::shutdownConnectorApp()
             }
         }
     }
+
+    // Lock signals again
+    sigfillset(&sigmask);
+    sigdelset(&sigmask, SIGSEGV);
+    sigdelset(&sigmask, SIGCHLD);
+    pthread_sigmask(SIG_BLOCK, &sigmask, NULL);
+
     return true;
 }
 

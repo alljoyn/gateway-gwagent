@@ -1,0 +1,103 @@
+--- alljoyn_core/router/posix/daemon-main.cc	2016-01-22 10:05:50.100842118 -0600
++++ daemon-main.cc	2016-01-22 10:05:40.174175666 -0600
+@@ -89,7 +89,7 @@
+ using namespace std;
+ 
+ static volatile sig_atomic_t reload;
+-static volatile sig_atomic_t quit;
++static volatile sig_atomic_t* quit;
+ 
+ /*
+  * Simple config to provide some non-default limits for the daemon tcp/udp transport.
+@@ -166,21 +166,6 @@
+     "\n"
+     "Build: %s\n";
+ 
+-void SignalHandler(int sig) {
+-    switch (sig) {
+-    case SIGHUP:
+-        if (!reload) {
+-            reload = 1;
+-        }
+-        break;
+-
+-    case SIGINT:
+-    case SIGTERM:
+-        quit = 1;
+-        break;
+-    }
+-}
+-
+ class OptParse {
+   public:
+     enum ParseResultCode {
+@@ -498,23 +483,8 @@
+ }
+ 
+ int daemon(OptParse& opts) {
+-    struct sigaction act, oldact;
+-    sigset_t sigmask, waitmask;
+     ConfigDB* config = ConfigDB::GetConfigDB();
+ 
+-    // block all signals by default for all threads
+-    sigfillset(&sigmask);
+-    sigdelset(&sigmask, SIGSEGV);
+-    pthread_sigmask(SIG_BLOCK, &sigmask, NULL);
+-
+-    act.sa_handler = SignalHandler;
+-    sigemptyset(&act.sa_mask);
+-    act.sa_flags = SA_SIGINFO | SA_RESTART;
+-
+-    sigaction(SIGHUP, &act, &oldact);
+-    sigaction(SIGINT, &act, &oldact);
+-    sigaction(SIGTERM, &act, &oldact);
+-
+     /*
+      * Extract the listen specs
+      */
+@@ -617,22 +587,14 @@
+         }
+     }
+ 
+-    sigfillset(&waitmask);
+-    sigdelset(&waitmask, SIGHUP);
+-    sigdelset(&waitmask, SIGINT);
+-    sigdelset(&waitmask, SIGTERM);
+-
+-    quit = 0;
+-    while (!quit) {
++    while (!(*quit)) {
+         reload = 0;
+-        sigsuspend(&waitmask);
+         if (reload && !opts.GetInternalConfig()) {
+             if (!config->LoadConfig(&ajBus)) {
+                 Log(LOG_ERR, "Failed to load the configuration - problem with %s.\n", opts.GetConfigFile().c_str());
+             }
+         }
+     }
+-
+     Log(LOG_INFO, "Terminating.\n");
+     ajBus.StopListen(listenSpecs.c_str());
+ 
+@@ -645,11 +607,7 @@
+ // is implemented as a static library which is linked into a JNI dynamic library and
+ // called from the Java service code.
+ //
+-#if defined(ROUTER_LIB)
+-int DaemonMain(int argc, char** argv, char* serviceConfig)
+-#else
+-int CDECL_CALL main(int argc, char** argv, char** env)
+-#endif
++int DaemonMain(int argc, char** argv, char* serviceConfig, sig_atomic_t* quitFlag)
+ {
+     if (AllJoynInit() != ER_OK) {
+         return DAEMON_EXIT_STARTUP_ERROR;
+@@ -669,6 +627,8 @@
+     environ = env;
+ #endif
+ 
++    quit = quitFlag;
++
+     int ret = 0;
+     String configStr;
+     ConfigDB* config = NULL;
