@@ -1,0 +1,93 @@
+diff -ruN alljoyn-tree2/core/alljoyn/alljoyn_core/router/bundled/BundledRouter.cc asagw72/BundledRouter.cc
+--- alljoyn-tree2/core/alljoyn/alljoyn_core/router/bundled/BundledRouter.cc	2016-01-12 17:31:41.790496671 -0600
++++ asagw72/BundledRouter.cc	2016-01-14 20:47:08.320354426 -0600
+@@ -190,7 +190,6 @@
+     /*
+      * Setup the config
+      */
+-#ifndef NDEBUG
+ #if defined(QCC_OS_ANDROID)
+     configFile = "/mnt/sdcard/.alljoyn/config.xml";
+ #else
+@@ -203,9 +202,23 @@
+         configFile = "";
+     }
+     config = new ConfigDB(configStr, configFile);
+-#else
+-    config = new ConfigDB(bundledConfig);
+-#endif
++
++}
++
++BundledRouter::BundledRouter(qcc::String filePath) : transportsInitialized(false), stopping(false), ajBus(NULL), ajBusController(NULL)
++{
++    NullTransport::RegisterRouterLauncher(this);
++    LoggerSetting::GetLoggerSetting("bundled-router");
++
++
++    configFile = filePath;
++    qcc::String configStr = bundledConfig;
++    if (ExistFile(configFile.c_str())) {
++        configStr = "";
++    } else {
++        configFile = "";
++    }
++    config = new ConfigDB(configStr, configFile);
+ }
+ 
+ BundledRouter::~BundledRouter()
+diff -ruN alljoyn-tree2/core/alljoyn/alljoyn_core/router/bundled/BundledRouter.h asagw72/BundledRouter.h
+--- alljoyn-tree2/core/alljoyn/alljoyn_core/router/bundled/BundledRouter.h	2016-01-12 17:31:41.790496671 -0600
++++ asagw72/BundledRouter.h	2016-01-11 14:59:49.000000000 -0600
+@@ -17,6 +17,7 @@
+ #define _ALLJOYN_BUNDLEDROUTER_H
+ 
+ #include <qcc/platform.h>
++#include <qcc/String.h>
+ 
+ #include "NullTransport.h"
+ #include "PasswordManager.h"
+@@ -47,6 +48,8 @@
+   public:
+ 
+     BundledRouter();
++    
++    BundledRouter(qcc::String filePath);
+ 
+     ~BundledRouter();
+ 
+diff -ruN alljoyn-tree2/core/alljoyn/alljoyn_core/router/bundled/BundledRouterInit.cc asagw72/BundledRouterInit.cc
+--- alljoyn-tree2/core/alljoyn/alljoyn_core/router/bundled/BundledRouterInit.cc	2016-01-12 17:25:46.351781038 -0600
++++ asagw72/BundledRouterInit.cc	2016-01-11 14:59:49.000000000 -0600
+@@ -19,6 +19,7 @@
+  *    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+  ******************************************************************************/
+ 
++#include <qcc/String.h>
+ #include <qcc/platform.h>
+ #include <qcc/Mutex.h>
+ #include <qcc/StaticGlobals.h>
+@@ -43,6 +44,23 @@
+         allJoynRouterInitCount = 1;
+     } else if (allJoynRouterInitCount < 0xFFFFFFFF) {
+         allJoynRouterInitCount++;
++    }
++
++    allJoynRouterInitLock.Unlock();
++
++    return ER_OK;
++}
++
++QStatus AllJoynRouterInitConfig(qcc::String filePath)
++{
++    allJoynRouterInitLock.Lock();
++
++    if (allJoynRouterInitCount == 0) {
++        ajn::RouterGlobals::Init();
++        bundledRouter = new ajn::BundledRouter(filePath);
++        allJoynRouterInitCount = 1;
++    } else if (allJoynRouterInitCount < 0xFFFFFFFF) {
++        allJoynRouterInitCount++;
+     }
+ 
+     allJoynRouterInitLock.Unlock();

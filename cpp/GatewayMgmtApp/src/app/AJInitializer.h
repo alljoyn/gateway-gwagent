@@ -18,7 +18,7 @@
 #define AJINITIALIZER_H_
 
 #include <alljoyn/Status.h>
-
+#include <qcc/String.h>
 /**
  * class AJInitializer
  * Utility class for handling AllJoyn lifecycle methods
@@ -32,7 +32,8 @@ class AJInitializer {
      * 
      */
     AJInitializer();
-
+    
+    AJInitializer(qcc::String configFilePath);
     /**
      * ~AJInitializer
      * Calls AllJoynRouterShutdown() if bundled router is enabled and then calls AllJoynShutdown()

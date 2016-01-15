@@ -17,6 +17,15 @@ import os
 env = SConscript('../../core/alljoyn/build_core/SConscript')
 
 vars = Variables()
+vars.Add(EnumVariable('BR', 'Have bundled router built-in for C++ test samples', 'on', allowed_values=('on', 'off')))
+
+if env['BR'] == 'on':
+    os.chdir("../../")
+    os.system("patch core/alljoyn/alljoyn_core/inc/alljoyn/Init.h < gateway/gwagent/patches/add-config-flag/init.add-config-flag.patch")
+    os.chdir("core/alljoyn/alljoyn_core/router/bundled")
+    os.system("patch < ../../../../../gateway/gwagent/patches/add-config-flag/bundled.add-config-flag.patch")
+    os.chdir("../../../../../gateway/gwagent")
+
 vars.Add('BINDINGS', 'Bindings to build (comma separated list): cpp, java', 'cpp,java')
 vars.Add(PathVariable('ALLJOYN_DISTDIR',
                       'Directory containing a built AllJoyn Core dist directory.',
@@ -56,3 +65,17 @@ env['bindings'] = set([ b.strip() for b in env['BINDINGS'].split(',') ])
 
 env.SConscript('SConscript')
 
+def unpatch(target, source, env):
+    if env['BR'] == 'on':
+        os.chdir("../../")
+        os.system("patch -R core/alljoyn/alljoyn_core/inc/alljoyn/Init.h < gateway/gwagent/patches/add-config-flag/init.add-config-flag.patch")
+        os.chdir("core/alljoyn/alljoyn_core/router/bundled")
+        os.system("patch -R < ../../../../../gateway/gwagent/patches/add-config-flag/bundled.add-config-flag.patch")
+        os.chdir("../../../../../gateway/gwagent")
+    return None
+
+
+unpatch_command = env.Command('unpatch', [], unpatch)
+
+env.Depends(unpatch_command, 'build')
+env.Default(unpatch_command)

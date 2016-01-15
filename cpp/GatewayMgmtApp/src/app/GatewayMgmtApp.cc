@@ -25,6 +25,7 @@
 #include "AJInitializer.h"
 #include "SrpKeyXListener.h"
 #include "GuidUtil.h"
+#include <string.h>
 
 using namespace ajn;
 using namespace gw;
@@ -192,12 +193,27 @@ void signal_callback_handler(int32_t signum)
         s_interrupt = true;
     }
 }
-qcc::String policyFileOption = "--gwagent-policy-file=";
+
+
 qcc::String appsPolicyDirOption = "--apps-policy-dir=";
+qcc::String policyFileOption = "--gwagent-policy-file=";
+qcc::String routingNodeConfigFileOption = "--config-file=";
 
 int main(int argc, char** argv)
 {
-    AJInitializer ajInit;
+   
+    qcc::String configPath;
+
+#ifdef ROUTER
+    for (int i = 1; i < argc; i++) {
+        qcc::String arg(argv[i]);
+        if (arg.compare(0, routingNodeConfigFileOption.size(), routingNodeConfigFileOption) == 0) {
+            configPath = arg.substr(routingNodeConfigFileOption.size());
+        }
+    }
+#endif
+
+    AJInitializer ajInit(configPath);
     if (ajInit.Status() != ER_OK) {
         return 1;
     }
@@ -212,6 +228,7 @@ start:
     // Initialize GatewayMgmt object
     gatewayMgmt = GatewayMgmt::getInstance();
 
+    
     for (int i = 1; i < argc; i++) {
         qcc::String arg(argv[i]);
         if (arg.compare(0, policyFileOption.size(), policyFileOption) == 0) {

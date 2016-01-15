@@ -28,6 +28,22 @@ AJInitializer::AJInitializer()
 #endif
 }
 
+AJInitializer::AJInitializer(qcc::String configPath) {
+
+    m_Status = AllJoynInit();
+
+
+#ifdef ROUTER
+    if (m_Status == ER_OK) {
+        if (!configPath.empty()) {
+            m_Status = AllJoynRouterInitConfig(configPath);
+        } else {
+            m_Status = AllJoynRouterInit();
+        }
+    } 
+#endif
+}
+
 AJInitializer::~AJInitializer()
 {
 #ifdef ROUTER

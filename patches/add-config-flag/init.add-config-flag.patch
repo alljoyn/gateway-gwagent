@@ -1,0 +1,19 @@
+--- ../../../alljoyn-tree2/core/alljoyn/alljoyn_core/inc/alljoyn/Init.h	2016-01-12 17:25:46.331780877 -0600
++++ ../../../Init.h	2016-01-14 23:01:13.658754828 -0600
+@@ -23,6 +23,7 @@
+ 
+ #include <qcc/platform.h>
+ #include <alljoyn/Status.h>
++#include <qcc/String.h>
+ 
+ #ifdef __cplusplus
+ extern "C" {
+@@ -71,6 +72,8 @@
+  */
+ extern AJ_API QStatus AJ_CALL AllJoynRouterInit(void);
+ 
++extern AJ_API QStatus AJ_CALL AllJoynRouterInitConfig(qcc::String configPath);
++
+ /**
+  * Call this to release any resources acquired in AllJoynRouterInit().
+  *
