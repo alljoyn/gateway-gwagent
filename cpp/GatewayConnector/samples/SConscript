@@ -17,6 +17,9 @@ Import('gateway_env')
 
 gwcnc_env = gateway_env.Clone()
 
+if gwcnc_env['BR'] == 'on':
+    gwcnc_env['BR'] = 'off'
+
 gwcnc_env.Append(CPPPATH = gwcnc_env.Dir('$APP_COMMON_DIR/cpp/samples_common').srcnode())
 gwcnc_env.Prepend(LIBS = ['alljoyn_about', 'alljoyn_services_common', 'alljoyn_notification', 'alljoyn_config', 'alljoyn_gwconnector'])
 
