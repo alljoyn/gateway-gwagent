@@ -573,7 +573,7 @@ QStatus AppBusObject::CheckAppPresence()
         m_pingTimer.Start();
 
         while (status != ER_OK && !timedout) {
-            status = this->bus->Ping(destination.c_str(), 5);
+            status = this->bus->Ping(destination.c_str(), 50);
             if (status == ER_OK) {
                 break;
             }
