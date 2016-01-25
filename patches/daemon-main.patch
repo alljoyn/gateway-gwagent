@@ -1,6 +1,6 @@
---- alljoyn_core/router/posix/daemon-main.cc	2016-01-22 10:05:50.100842118 -0600
-+++ daemon-main.cc	2016-01-22 10:05:40.174175666 -0600
-@@ -89,7 +89,7 @@
+--- alljoyn_core/router/posix/daemon-main.cc	2016-01-22 15:51:49.016322355 -0600
++++ daemon-main.cc	2016-01-22 15:39:13.683005380 -0600
+@@ -91,7 +91,7 @@
  using namespace std;
  
  static volatile sig_atomic_t reload;
@@ -9,7 +9,7 @@
  
  /*
   * Simple config to provide some non-default limits for the daemon tcp/udp transport.
-@@ -166,21 +166,6 @@
+@@ -165,21 +165,6 @@
      "\n"
      "Build: %s\n";
  
@@ -31,7 +31,7 @@
  class OptParse {
    public:
      enum ParseResultCode {
-@@ -498,23 +483,8 @@
+@@ -535,23 +520,8 @@
  }
  
  int daemon(OptParse& opts) {
@@ -55,7 +55,7 @@
      /*
       * Extract the listen specs
       */
-@@ -617,22 +587,14 @@
+@@ -654,22 +624,14 @@
          }
      }
  
@@ -79,20 +79,25 @@
      Log(LOG_INFO, "Terminating.\n");
      ajBus.StopListen(listenSpecs.c_str());
  
-@@ -645,11 +607,7 @@
+@@ -682,15 +644,9 @@
  // is implemented as a static library which is linked into a JNI dynamic library and
  // called from the Java service code.
  //
 -#if defined(ROUTER_LIB)
 -int DaemonMain(int argc, char** argv, char* serviceConfig)
+-{
 -#else
 -int CDECL_CALL main(int argc, char** argv, char** env)
--#endif
 +int DaemonMain(int argc, char** argv, char* serviceConfig, sig_atomic_t* quitFlag)
  {
+-    QCC_UNUSED(env);
+-#endif
+-
++    QCC_UNUSED(serviceConfig);
      if (AllJoynInit() != ER_OK) {
          return DAEMON_EXIT_STARTUP_ERROR;
-@@ -669,6 +627,8 @@
+     }
+@@ -709,6 +665,8 @@
      environ = env;
  #endif
  
