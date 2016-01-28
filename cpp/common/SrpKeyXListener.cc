@@ -15,9 +15,13 @@
  ******************************************************************************/
 
 #include "SrpKeyXListener.h"
-#include <iostream>
 
-SrpKeyXListener::SrpKeyXListener() : m_PassCode("000000"), m_GetPassCode(0)
+#define DEFAULT_PASSCODE "000000"
+
+namespace ajn {
+namespace gw {
+
+SrpKeyXListener::SrpKeyXListener() : m_PassCode(DEFAULT_PASSCODE), m_GetPassCode(0)
 {
 
 
@@ -41,8 +45,10 @@ void SrpKeyXListener::setGetPassCode(void (*getPassCode)(qcc::String&))
 bool SrpKeyXListener::RequestCredentials(const char* authMechanism, const char* authPeer,
                                          uint16_t authCount, const char* userId, uint16_t credMask, Credentials& creds)
 {
+    QCC_UNUSED(authMechanism);
+    QCC_UNUSED(authPeer);
     QCC_UNUSED(userId);
-    std::cout << "RequestCredentials for authenticating " << authPeer << " using mechanism " << authMechanism << std::endl;
+
     if (strcmp(authMechanism, "ALLJOYN_SRP_KEYX") == 0 || strcmp(authMechanism, "ALLJOYN_ECDHE_PSK") == 0) {
         if (credMask & AuthListener::CRED_PASSWORD) {
             if (authCount <= 3) {
@@ -50,7 +56,6 @@ bool SrpKeyXListener::RequestCredentials(const char* authMechanism, const char* 
                 if (m_GetPassCode) {
                     m_GetPassCode(passCodeFromGet);
                 }
-                std::cout << "RequestCredentials setPasscode to " << (m_GetPassCode ? passCodeFromGet.c_str() : m_PassCode.c_str()) << std::endl;
                 creds.SetPassword(m_GetPassCode ? passCodeFromGet.c_str() : m_PassCode.c_str());
                 return true;
             } else {
@@ -63,6 +68,10 @@ bool SrpKeyXListener::RequestCredentials(const char* authMechanism, const char* 
 
 void SrpKeyXListener::AuthenticationComplete(const char* authMechanism, const char* authPeer, bool success)
 {
+    QCC_UNUSED(authMechanism);
     QCC_UNUSED(authPeer);
-    std::cout << "Authentication with " << authMechanism << (success ? " was successful" : " failed") << std::endl;
+    QCC_UNUSED(success);
+}
+
+}
 }

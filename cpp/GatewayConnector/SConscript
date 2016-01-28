@@ -18,6 +18,7 @@ import os
 gateway_env['GWCNC_DISTDIR'] = gateway_env['DISTDIR'] + '/gatewayConnector'
 
 gateway_env.Append(LIBPATH = '$GWCNC_DISTDIR/lib');
+gateway_env.Append(LIBPATH = '$DISTDIR/common/lib')
 gateway_env.Append(CPPPATH = '$GWCNC_DISTDIR/inc');
 
 gateway_env.Install('$GWCNC_DISTDIR/inc/alljoyn/gateway', gateway_env.Glob('inc/alljoyn/gateway/*.h'))

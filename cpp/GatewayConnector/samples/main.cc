@@ -14,8 +14,8 @@
  *    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  ******************************************************************************/
 
-#include "../../GatewayMgmtApp/src/app/SrpKeyXListener.h"
-#include <CommonSampleUtil.h>
+#include <alljoyn/gateway/common/AJInitializer.h>
+#include <alljoyn/gateway/common/SrpKeyXListener.h>
 #include <alljoyn/BusAttachment.h>
 #include <alljoyn/Init.h>
 #include <alljoyn/AboutProxy.h>
@@ -27,18 +27,21 @@
 #include <alljoyn/PasswordManager.h>
 #include <alljoyn/config/ConfigClient.h>
 #include <alljoyn/services_common/GuidUtil.h>
+#include <alljoyn/AboutObj.h>
 
 #include <iomanip>
 #include <iostream>
 #include <unistd.h>
 #include <signal.h>
 #include <set>
+#include <algorithm>
 
 using namespace ajn;
 using namespace ajn::services;
 using namespace ajn::gw;
 using namespace std;
 
+#define CHECK_RETURN(x) if ((status = x) != ER_OK) {return status;}
 
 class ExitManager {
   public:
@@ -67,6 +70,75 @@ class ExitManager {
 };
 
 ExitManager exitManager;
+
+
+class CommonBusListener : public ajn::BusListener, public ajn::SessionPortListener, public ajn::SessionListener {
+  public:
+    CommonBusListener(ajn::BusAttachment* bus = NULL, void(*daemonDisconnectCB)() = NULL) : BusListener(), SessionPortListener(), m_SessionPort(0), m_Bus(bus), m_DaemonDisconnectCB(daemonDisconnectCB)
+    {
+    }
+
+    ~CommonBusListener()
+    {
+    }
+
+    bool AcceptSessionJoiner(ajn::SessionPort sessionPort, const char* joiner, const ajn::SessionOpts& opts)
+    {
+        QCC_UNUSED(joiner);
+        QCC_UNUSED(opts);
+        if (sessionPort != m_SessionPort) {
+            return false;
+        }
+
+        std::cout << "Accepting JoinSessionRequest" << std::endl;
+        return true;
+    }
+    void setSessionPort(ajn::SessionPort sessionPort)
+    {
+        m_SessionPort = sessionPort;
+    }
+    void SessionJoined(ajn::SessionPort sessionPort, ajn::SessionId id, const char* joiner)
+    {
+        QCC_UNUSED(sessionPort);
+        QCC_UNUSED(joiner);
+        std::cout << "Session has been joined successfully" << std::endl;
+        if (m_Bus) {
+            m_Bus->SetSessionListener(id, this);
+        }
+        m_SessionIds.push_back(id);
+    }
+    void SessionLost(ajn::SessionId sessionId, SessionLostReason reason)
+    {
+        QCC_UNUSED(reason);
+        std::cout << "Session has been lost" << std::endl;
+        std::vector<SessionId>::iterator it = std::find(m_SessionIds.begin(), m_SessionIds.end(), sessionId);
+        if (it != m_SessionIds.end()) {
+            m_SessionIds.erase(it);
+        }
+    }
+    ajn::SessionPort getSessionPort()
+    {
+        return m_SessionPort;
+    }
+    const std::vector<ajn::SessionId>& getSessionIds() const
+    {
+        return m_SessionIds;
+    }
+    void BusDisconnected()
+    {
+        std::cout << "Bus has been disconnected" << std::endl;
+        if (m_DaemonDisconnectCB) {
+            m_DaemonDisconnectCB();
+        }
+    }
+
+  private:
+    ajn::SessionPort m_SessionPort;
+    ajn::BusAttachment* m_Bus;
+    std::vector<ajn::SessionId> m_SessionIds;
+    void (*m_DaemonDisconnectCB)();
+
+};
 
 
 class ConfigSession : public BusAttachment::JoinSessionAsyncCB, public SessionListener {
@@ -364,6 +436,89 @@ void dumpObjectSpecs(list<GatewayMergedAcl::ObjectDescription>& specs, const cha
     }
 }
 
+QStatus fillAboutData(AboutData* aboutdata,
+                      qcc::String const& appIdHex,
+                      qcc::String const& appName,
+                      qcc::String const& deviceId,
+                      std::map<qcc::String, qcc::String> const& deviceNames,
+                      qcc::String const& defaultLanguage = "en")
+{
+    if (!aboutdata) {
+        return ER_BAD_ARG_1;
+    }
+
+    QStatus status = ER_OK;
+
+    if (!appIdHex.empty()) {
+        CHECK_RETURN(aboutdata->SetAppId(appIdHex.c_str()));
+    }
+
+    if (deviceId != "") {
+        CHECK_RETURN(aboutdata->SetDeviceId(deviceId.c_str()))
+    }
+
+    std::vector<qcc::String> languages(3);
+    languages[0] = "en";
+    languages[1] = "es";
+    languages[2] = "fr";
+
+    for (size_t i = 0; i < languages.size(); i++) {
+        CHECK_RETURN(aboutdata->SetSupportedLanguage(languages[i].c_str()))
+    }
+
+    if (defaultLanguage != "") {
+        CHECK_RETURN(aboutdata->SetDefaultLanguage(defaultLanguage.c_str()))
+    }
+
+    if (appName != "") {
+        CHECK_RETURN(aboutdata->SetAppName(appName.c_str(), languages[0].c_str()))
+        CHECK_RETURN(aboutdata->SetAppName(appName.c_str(), languages[1].c_str()))
+        CHECK_RETURN(aboutdata->SetAppName(appName.c_str(), languages[2].c_str()))
+    }
+
+    CHECK_RETURN(aboutdata->SetModelNumber("Wxfy388i"))
+    CHECK_RETURN(aboutdata->SetDateOfManufacture("10/1/2199"))
+    CHECK_RETURN(aboutdata->SetSoftwareVersion("12.20.44 build 44454"))
+    CHECK_RETURN(aboutdata->SetHardwareVersion("355.499. b"))
+
+    std::map<qcc::String, qcc::String>::const_iterator iter = deviceNames.find(languages[0]);
+    if (iter != deviceNames.end()) {
+        CHECK_RETURN(aboutdata->SetDeviceName(iter->second.c_str(), languages[0].c_str()));
+    } else {
+        CHECK_RETURN(aboutdata->SetDeviceName("My device name", "en"));
+    }
+
+    iter = deviceNames.find(languages[1]);
+    if (iter != deviceNames.end()) {
+        CHECK_RETURN(aboutdata->SetDeviceName(iter->second.c_str(), languages[1].c_str()));
+    } else {
+        CHECK_RETURN(aboutdata->SetDeviceName("Mi nombre de dispositivo", "es"));
+    }
+
+    iter = deviceNames.find(languages[2]);
+    if (iter != deviceNames.end()) {
+        CHECK_RETURN(aboutdata->SetDeviceName(iter->second.c_str(), languages[2].c_str()));
+    } else {
+        CHECK_RETURN(aboutdata->SetDeviceName("Mon nom de l'appareil", "fr"));
+    }
+
+    CHECK_RETURN(aboutdata->SetDescription("This is an Alljoyn Application", "en"))
+    CHECK_RETURN(aboutdata->SetDescription("Esta es una Alljoyn aplicacion", "es"))
+    CHECK_RETURN(aboutdata->SetDescription("C'est une Alljoyn application", "fr"))
+
+    CHECK_RETURN(aboutdata->SetManufacturer("Company", "en"))
+    CHECK_RETURN(aboutdata->SetManufacturer("Empresa", "es"))
+    CHECK_RETURN(aboutdata->SetManufacturer("Entreprise", "fr"))
+
+    CHECK_RETURN(aboutdata->SetSupportUrl("http://www.alljoyn.org"))
+
+    if (!aboutdata->IsValid()) {
+        printf("failed to setup about data.\n");
+        return ER_FAIL;
+    }
+    return status;
+}
+
 void dumpAcl(GatewayMergedAcl* p) {
     cout << "Exposed Services:" << endl;
     dumpObjectSpecs(p->m_ExposedServices, "");
@@ -532,19 +687,26 @@ int main(int argc, char** argv) {
 
     AboutData aboutData("en");
     AboutObj* aboutObj = new AboutObj(*bus);
-    DeviceNamesType deviceNames;
+    std::map<qcc::String, qcc::String> deviceNames;
     deviceNames.insert(pair<qcc::String, qcc::String>("en", "ConnectorSampleDevice"));
-    status = CommonSampleUtil::fillAboutData(&aboutData, appid, "ConnectorSample", deviceid, deviceNames);
+    status = fillAboutData(&aboutData, appid, "ConnectorSample", deviceid, deviceNames);
     if (status != ER_OK) {
         cout << "Could not fill AboutData. " <<  QCC_StatusText(status) << endl;
         return 1;
     }
-    status = CommonSampleUtil::prepareAboutService(bus, &aboutData, aboutObj, &busListener, 900);
+
+    busListener.setSessionPort(900);
+    bus->RegisterBusListener(busListener);
+
+    TransportMask transportMask = TRANSPORT_ANY;
+    SessionPort sp = 900;
+    SessionOpts opts(SessionOpts::TRAFFIC_MESSAGES, false, SessionOpts::PROXIMITY_ANY, transportMask);
+
+    status = bus->BindSessionPort(sp, opts, busListener);
     if (status != ER_OK) {
-        cout << "Could not set up the AboutService." << endl;
-        notificationService->shutdown();
-        return 1;
+        return status;
     }
+
     NotificationSender* notificationSender = notificationService->initSend(bus, &aboutData);
     if (!notificationSender) {
         cout << "Could not initialize Sender" << endl;
