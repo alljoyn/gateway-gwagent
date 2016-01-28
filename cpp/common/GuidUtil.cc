@@ -32,8 +32,9 @@
 
 static const char DEVICE_ID_FILE_NAME[] = "alljoyn-deviceId.txt";
 
-using namespace ajn;
-using namespace gw;
+namespace ajn {
+namespace gw {
+
 using namespace qcc;
 
 GuidUtil* GuidUtil::pGuidUtil = NULL;
@@ -140,3 +141,5 @@ void GuidUtil::GetDeviceIdString(qcc::String* deviceId)
     deviceId->assign(tempstrGUID);
 }
 
+}
+}

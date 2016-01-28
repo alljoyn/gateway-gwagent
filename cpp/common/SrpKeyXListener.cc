@@ -15,12 +15,11 @@
  ******************************************************************************/
 
 #include "SrpKeyXListener.h"
-#include "../GatewayConstants.h"
 
 #define DEFAULT_PASSCODE "000000"
 
-using namespace ajn;
-using namespace gw;
+namespace ajn {
+namespace gw {
 
 SrpKeyXListener::SrpKeyXListener() : m_PassCode(DEFAULT_PASSCODE), m_GetPassCode(0)
 {
@@ -46,8 +45,9 @@ void SrpKeyXListener::setGetPassCode(void (*getPassCode)(qcc::String&))
 bool SrpKeyXListener::RequestCredentials(const char* authMechanism, const char* authPeer,
                                          uint16_t authCount, const char* userId, uint16_t credMask, Credentials& creds)
 {
+    QCC_UNUSED(authMechanism);
+    QCC_UNUSED(authPeer);
     QCC_UNUSED(userId);
-    QCC_DbgPrintf(("RequestCredentials for authenticating %s using mechanism %s", authPeer, authMechanism));
 
     if (strcmp(authMechanism, "ALLJOYN_SRP_KEYX") == 0 || strcmp(authMechanism, "ALLJOYN_ECDHE_PSK") == 0) {
         if (credMask & AuthListener::CRED_PASSWORD) {
@@ -56,7 +56,6 @@ bool SrpKeyXListener::RequestCredentials(const char* authMechanism, const char* 
                 if (m_GetPassCode) {
                     m_GetPassCode(passCodeFromGet);
                 }
-                QCC_DbgPrintf(("RequestCredentials setPasscode to %s", m_PassCode.c_str()));
                 creds.SetPassword(m_GetPassCode ? passCodeFromGet.c_str() : m_PassCode.c_str());
                 return true;
             } else {
@@ -69,6 +68,10 @@ bool SrpKeyXListener::RequestCredentials(const char* authMechanism, const char* 
 
 void SrpKeyXListener::AuthenticationComplete(const char* authMechanism, const char* authPeer, bool success)
 {
+    QCC_UNUSED(authMechanism);
     QCC_UNUSED(authPeer);
-    QCC_DbgPrintf(("Authentication with %s %s", authMechanism, (success ? " was successful" : " failed")));
+    QCC_UNUSED(success);
+}
+
+}
 }

@@ -14,45 +14,49 @@
  *    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  ******************************************************************************/
 
-#include "AJInitializer.h"
-#include <alljoyn/Init.h>
+#ifndef AJINITIALIZER_H_
+#define AJINITIALIZER_H_
 
-AJInitializer::AJInitializer()
-{
-    m_Status = AllJoynInit();
+#include <alljoyn/Status.h>
+#include <qcc/String.h>
+/**
+ * class AJInitializer
+ * Utility class for handling AllJoyn lifecycle methods
+ */
 
-#ifdef ROUTER
-    if (m_Status == ER_OK) {
-        m_Status = AllJoynRouterInit();
-    }
-#endif
+namespace ajn {
+namespace gw {
+
+class AJInitializer {
+  public:
+    /**
+     * AJInitializer 
+     * Calls AllJoynInit(). If bundled router is enabled it also calls AllJoynRouterInit()
+     * 
+     */
+    AJInitializer();
+    
+//    AJInitializer(qcc::String configFilePath);
+    /**
+     * ~AJInitializer
+     * Calls AllJoynRouterShutdown() if bundled router is enabled and then calls AllJoynShutdown()
+     */
+    ~AJInitializer();
+
+    /*
+     * Return the status of AllJoynInit and AllJoynRouterInit
+     * @return QStatus
+     */
+    QStatus Status() const;
+
+  private:
+    /*
+     * Status of AllJoynInit and AllJoynRouterInit
+     */
+    QStatus m_Status;
+};
+
 }
-
-/*AJInitializer::AJInitializer(qcc::String configPath) {
-
-    m_Status = AllJoynInit();
-
-
-#ifdef ROUTER
-    if (m_Status == ER_OK) {
-        if (!configPath.empty()) {
-            m_Status = AllJoynRouterInitConfig(configPath);
-        } else {
-            m_Status = AllJoynRouterInit();
-        }
-    } 
-#endif
-}*/
-
-AJInitializer::~AJInitializer()
-{
-#ifdef ROUTER
-    AllJoynRouterShutdown();
-#endif
-    AllJoynShutdown();
 }
+#endif /* AJINITIALIZERGWAGENT_H_ */
 
-QStatus AJInitializer::Status() const
-{
-    return m_Status;
-}
