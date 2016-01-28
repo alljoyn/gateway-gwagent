@@ -15,20 +15,21 @@
 #*****************************************************************************
 
 Import('gateway_env')
-import os
 
-gateway_env.Append(CPPPATH = ['$LIBXML2_BASE'])
-gateway_env.Append(LIBS = ['libxml2'])
+gwcommon_env = gateway_env.Clone()
+
+gateway_env['GWCOMMON_DISTDIR'] = gateway_env['DISTDIR'] + '/common'
+
 if gateway_env['BR'] == 'on':
-    gateway_env.Prepend(LIBS = ['ajrouter'])
-    
-gateway_env.Prepend(LIBS = ['alljoyn', 'alljoyn_gwcommon', 'alljoyn_services_common'])
+    gwcommon_env.Prepend(LIBS = ['ajrouter'])
 
-srcs = gateway_env.Glob('*.cc')
-srcs.extend(gateway_env.Glob('busObjects/*.cc'))    
-srcs.extend(gateway_env.Glob('app/*.cc'))
-objs = gateway_env.Object(srcs)
+common_srcs = gwcommon_env.Glob('*.cc')
 
-prog = gateway_env.Program('alljoyn-gwagent', objs)
+common_libs = []
 
-Return('prog')
+# Static library
+common_objs = gwcommon_env.Object(common_srcs)
+common_libs.append(gwcommon_env.StaticLibrary('alljoyn_gwcommon', common_objs))
+
+gateway_env.Install('$GWCOMMON_DISTDIR/inc/alljoyn/gateway/common', gwcommon_env.Glob('*.h'))
+gateway_env.Install('$GWCOMMON_DISTDIR/lib/', common_libs)

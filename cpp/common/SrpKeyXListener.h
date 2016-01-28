@@ -19,6 +19,12 @@
 
 #include <alljoyn/AuthListener.h>
 
+namespace ajn {
+namespace gw {
+namespace common {
+
+static char const* const QCC_MODULE = "GATEWAY";
+
 #if defined(QCC_OS_GROUP_WINDOWS)
 /* Disabling warning C 4100. Function doesnt use all passed in parameters */
 #pragma warning(push)
@@ -83,4 +89,6 @@ class SrpKeyXListener : public ajn::AuthListener {
 
 #endif /* SRPKEYLISTENER_H_ */
 
-
+}
+}
+}

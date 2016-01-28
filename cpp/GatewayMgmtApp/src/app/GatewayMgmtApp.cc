@@ -23,10 +23,11 @@
 #include <alljoyn/gateway/GatewayMgmt.h>
 #include <alljoyn/gateway/GatewayBusListener.h>
 #include "../GatewayConstants.h"
+#include <alljoyn/gateway/common/AJInitializer.h>
+#include <alljoyn/gateway/common/SrpKeyXListener.h>
+#include <alljoyn/services_common/GuidUtil.h>
 #include "GatewayMgmtAppConfig.h"
-#include "AJInitializer.h"
-#include "SrpKeyXListener.h"
-#include "GuidUtil.h"
+#include <string.h>
 
 using namespace ajn;
 using namespace gw;
@@ -38,7 +39,7 @@ GatewayMgmt* gatewayMgmt = NULL;
 BusAttachment* bus = NULL;
 AboutData* aboutData = NULL;
 GatewayBusListener*  busListener = NULL;
-SrpKeyXListener* keyListener = NULL;
+common::SrpKeyXListener* keyListener = NULL;
 static volatile sig_atomic_t s_interrupt = false;
 static volatile sig_atomic_t s_restart = false;
 
@@ -107,7 +108,7 @@ QStatus fillAboutData()
     QStatus status = ER_OK;
 
     qcc::String deviceId;
-    GuidUtil::GetInstance()->GetDeviceIdString(&deviceId);
+    ajn::services::GuidUtil::GetInstance()->GetDeviceIdString(&deviceId);
     qcc::String appId;
     std::fstream ifs(GATEWAY_APPID_FILE_PATH.c_str(), std::fstream::in);
     if (ifs) {
@@ -120,7 +121,7 @@ QStatus fillAboutData()
         QCC_DbgPrintf(("AppId file does not exists. A new AppId will be created.\n"));
         ifs.open(GATEWAY_APPID_FILE_PATH.c_str(), std::fstream::out | std::fstream::app);
 
-        GuidUtil::GetInstance()->GenerateGUID(&appId);
+        ajn::services::GuidUtil::GetInstance()->GenerateGUID(&appId);
 
         ifs << appId.c_str();
         ifs.flush();
@@ -222,7 +223,9 @@ qcc::String appsPolicyDirOption = "--apps-policy-dir=";
 
 int main(int argc, char** argv)
 {
-    AJInitializer ajInit;
+    qcc::String configPath;
+
+    common::AJInitializer ajInit;
     if (ajInit.Status() != ER_OK) {
         return 1;
     }
@@ -258,7 +261,7 @@ start:
         return 1;
     }
 
-    keyListener = new SrpKeyXListener();
+    keyListener = new common::SrpKeyXListener();
     keyListener->setPassCode("000000");
     status = bus->EnablePeerSecurity("ALLJOYN_SRP_KEYX ALLJOYN_ECDHE_PSK", keyListener);
     if (status != ER_OK) {
@@ -312,8 +315,8 @@ start:
         return 1;
     }
 
-    AboutObj aboutObj(*bus);
-    status = aboutObj.Announce(SERVICE_PORT, *aboutData);
+    AboutObj* aboutObj = new AboutObj(*bus);
+    status = aboutObj->Announce(SERVICE_PORT, *aboutData);
     if (status != ER_OK) {
         QCC_LogError(status, ("Could not announce."));
         cleanup();
@@ -323,6 +326,8 @@ start:
     QCC_DbgPrintf(("Finished initializing Gateway App"));
 
     WaitForSigInt();
+
+    delete aboutObj;
 
     cleanup();
     if (s_restart) {

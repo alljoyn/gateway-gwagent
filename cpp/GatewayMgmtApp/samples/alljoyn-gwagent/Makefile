@@ -46,7 +46,6 @@ define Package/$(PKG_NAME)
   CATEGORY:=Network
   DEPENDS:=alljoyn \
     +alljoyn-about \
-    +alljoyn-services_common \
     +libxml2 \
     +shadow-useradd \
     +shadow-userdel
