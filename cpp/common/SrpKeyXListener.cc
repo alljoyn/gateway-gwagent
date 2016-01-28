@@ -15,12 +15,13 @@
  ******************************************************************************/
 
 #include "SrpKeyXListener.h"
-#include "../GatewayConstants.h"
+#include <qcc/Debug.h>
 
 #define DEFAULT_PASSCODE "000000"
 
-using namespace ajn;
-using namespace gw;
+namespace ajn {
+namespace gw {
+namespace common {
 
 SrpKeyXListener::SrpKeyXListener() : m_PassCode(DEFAULT_PASSCODE), m_GetPassCode(0)
 {
@@ -48,7 +49,6 @@ bool SrpKeyXListener::RequestCredentials(const char* authMechanism, const char* 
 {
     QCC_UNUSED(userId);
     QCC_DbgPrintf(("RequestCredentials for authenticating %s using mechanism %s", authPeer, authMechanism));
-
     if (strcmp(authMechanism, "ALLJOYN_SRP_KEYX") == 0 || strcmp(authMechanism, "ALLJOYN_ECDHE_PSK") == 0) {
         if (credMask & AuthListener::CRED_PASSWORD) {
             if (authCount <= 3) {
@@ -71,4 +71,8 @@ void SrpKeyXListener::AuthenticationComplete(const char* authMechanism, const ch
 {
     QCC_UNUSED(authPeer);
     QCC_DbgPrintf(("Authentication with %s %s", authMechanism, (success ? " was successful" : " failed")));
+}
+
+}
+}
 }

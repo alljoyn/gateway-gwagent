@@ -14,40 +14,39 @@
  *    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  ******************************************************************************/
 
-#ifndef AJINITIALIZER_H_
-#define AJINITIALIZER_H_
+#include "AJInitializer.h"
+#include <alljoyn/Init.h>
 
-#include <alljoyn/Status.h>
+namespace ajn {
+namespace gw {
+namespace common {
 
-/**
- * class AJInitializer
- * Utility class for handling AllJoyn lifecycle methods
- */
-class AJInitializer {
-  public:
-    /**
-     * Calls AllJoynInit(). If bundled router is enabled it also calls AllJoynRouterInit()
-     * @return ER_OK if initialization succeeded
-     */
-    QStatus Initialize();
+AJInitializer::AJInitializer()
+{
+    m_Status = AllJoynInit();
+#ifdef ROUTER
+    if (m_Status == ER_OK) {
+        m_Status = AllJoynRouterInit();
+        if (m_Status != ER_OK) {
+            AllJoynShutdown();
+        }
+    }
+#endif
+}
 
-    /**
-     * ~AJInitializer
-     * Calls AllJoynRouterShutdown() if bundled router is enabled and then calls AllJoynShutdown()
-     */
-    ~AJInitializer();
+AJInitializer::~AJInitializer()
+{
+#ifdef ROUTER
+    AllJoynRouterShutdown();
+#endif
+    AllJoynShutdown();
+}
 
-    /*
-     * Return the status of AllJoynInit and AllJoynRouterInit
-     * @return QStatus
-     */
-    QStatus Status() const;
+QStatus AJInitializer::Status() const
+{
+    return m_Status;
+}
 
-  private:
-    /*
-     * Status of AllJoynInit and AllJoynRouterInit
-     */
-    QStatus m_Status;
-};
-
-#endif /* AJINITIALIZERGWAGENT_H_ */
+}
+}
+}
