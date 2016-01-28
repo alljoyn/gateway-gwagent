@@ -22,9 +22,9 @@
 #include <alljoyn/gateway/GatewayMgmt.h>
 #include <alljoyn/gateway/GatewayBusListener.h>
 #include "../GatewayConstants.h"
-#include "AJInitializer.h"
-#include "SrpKeyXListener.h"
-#include "GuidUtil.h"
+#include <alljoyn/gateway/common/AJInitializer.h>
+#include <alljoyn/gateway/common/SrpKeyXListener.h>
+#include <alljoyn/services_common/GuidUtil.h>
 #include <string.h>
 #include <pthread.h>
 
@@ -138,9 +138,9 @@ QStatus fillAboutData()
     QStatus status = ER_OK;
 
     qcc::String deviceId;
-    GuidUtil::GetInstance()->GetDeviceIdString(&deviceId);
+    ajn::services::GuidUtil::GetInstance()->GetDeviceIdString(&deviceId);
     qcc::String appId;
-    GuidUtil::GetInstance()->GenerateGUID(&appId);
+    ajn::services::GuidUtil::GetInstance()->GenerateGUID(&appId);
 
     status = aboutData->SetDeviceId(deviceId.c_str());
     if (status != ER_OK) {
