@@ -23,6 +23,10 @@
  * class AJInitializer
  * Utility class for handling AllJoyn lifecycle methods
  */
+
+namespace ajn {
+namespace gw {
+
 class AJInitializer {
   public:
     /**
@@ -50,4 +54,6 @@ class AJInitializer {
     QStatus m_Status;
 };
 
+}
+}
 #endif /* AJINITIALIZERGWAGENT_H_ */

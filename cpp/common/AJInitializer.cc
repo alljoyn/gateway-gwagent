@@ -17,17 +17,18 @@
 #include "AJInitializer.h"
 #include <alljoyn/Init.h>
 
-QStatus AJInitializer::Initialize()
+namespace ajn {
+namespace gw {
+
+AJInitializer::AJInitializer()
 {
-    QStatus status = AllJoynInit();
-    if (status != ER_OK) {
-        return status;
-    }
+    m_Status = AllJoynInit();
 #ifdef ROUTER
-    status = AllJoynRouterInit();
-    if (status != ER_OK) {
-        AllJoynShutdown();
-        return status;
+    if (m_Status == ER_OK) {
+        m_Status = AllJoynRouterInit();
+        if (m_Status != ER_OK) {
+            AllJoynShutdown();
+        }
     }
 #endif
     return status;
@@ -44,4 +45,7 @@ AJInitializer::~AJInitializer()
 QStatus AJInitializer::Status() const
 {
     return m_Status;
+}
+
+}
 }

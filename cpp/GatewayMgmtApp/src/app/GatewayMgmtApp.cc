@@ -23,10 +23,9 @@
 #include <alljoyn/gateway/GatewayMgmt.h>
 #include <alljoyn/gateway/GatewayBusListener.h>
 #include "../GatewayConstants.h"
-#include "GatewayMgmtAppConfig.h"
-#include "AJInitializer.h"
-#include "SrpKeyXListener.h"
-#include "GuidUtil.h"
+#include <alljoyn/gateway/common/AJInitializer.h>
+#include <alljoyn/gateway/common/SrpKeyXListener.h>
+#include <alljoyn/services_common/GuidUtil.h>
 #include <string.h>
 #include <pthread.h>
 
@@ -142,7 +141,7 @@ QStatus fillAboutData()
     QStatus status = ER_OK;
 
     qcc::String deviceId;
-    GuidUtil::GetInstance()->GetDeviceIdString(&deviceId);
+    ajn::services::GuidUtil::GetInstance()->GetDeviceIdString(&deviceId);
     qcc::String appId;
     std::fstream ifs(GATEWAY_APPID_FILE_PATH.c_str(), std::fstream::in);
     if (ifs) {
@@ -159,7 +158,7 @@ QStatus fillAboutData()
     QCC_DbgPrintf(("AppId file does not exists. A new AppId will be crated.\n"));
     ifs.open(GATEWAY_APPID_FILE_PATH.c_str(), std::fstream::out | std::fstream::app);
 
-    GuidUtil::GetInstance()->GenerateGUID(&appId);
+    ajn::services::GuidUtil::GetInstance()->GenerateGUID(&appId);
 
     ifs << appId.c_str();
     ifs.flush();
