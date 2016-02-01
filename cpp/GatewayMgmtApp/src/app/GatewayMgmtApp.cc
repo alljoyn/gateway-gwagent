@@ -13,8 +13,6 @@
  *    ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  *    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  ******************************************************************************/
-#include <fstream>
-#include <signal.h>
 #include <alljoyn/PasswordManager.h>
 #include <alljoyn/AboutData.h>
 #include <alljoyn/AboutObj.h>
@@ -22,13 +20,16 @@
 #include <alljoyn/Init.h>
 #include <alljoyn/gateway/GatewayMgmt.h>
 #include <alljoyn/gateway/GatewayBusListener.h>
-#include "../GatewayConstants.h"
 #include <alljoyn/gateway/common/AJInitializer.h>
 #include <alljoyn/gateway/common/SrpKeyXListener.h>
 #include <alljoyn/services_common/GuidUtil.h>
 #include "GatewayMgmtAppConfig.h"
 #include <string.h>
 #include <pthread.h>
+#include <signal.h>
+
+#include "../GatewayConstants.h"
+#include "GatewayMgmtAppConfigListener.h"
 
 using namespace ajn;
 using namespace gw;
@@ -342,6 +343,16 @@ int main(int argc, char** argv)
         cleanup();
         return 1;
     }
+
+    GatewayMgmtAppConfigListener configServiceListener( 
+            keyListener,
+            bus,
+            busListener
+            );
+
+    GatewayMgmtAppDataStore configDataStore(NULL, NULL);
+
+    ajn::services::ConfigService configService(*bus, configDataStore, configServiceListener);
 
     const uint32_t flags = DBUS_NAME_FLAG_REPLACE_EXISTING | DBUS_NAME_FLAG_DO_NOT_QUEUE;
     status = bus->RequestName(GW_WELLKNOWN_NAME, flags);
