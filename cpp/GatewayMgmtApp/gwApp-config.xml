@@ -16,7 +16,7 @@
            OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
   -->
-<manifest xmlns="http://www.alljoyn.org/gateway/manifest">
+<about xmlns="http://www.alljoyn.org/gateway/manifest">
     <language>en</language>
     <deviceName>AllJoyn Gateway Agent</deviceName>
     <appName>AllJoyn Gateway Configuration Manager</appName>
@@ -25,4 +25,5 @@
     <modelNumber>1.1</modelNumber>
     <softwareVersion>1.0</softwareVersion>
     <description>AllJoyn Gateway Configuration Manager Application</description>
-</manifest>
+    <alljoynPasscode>000000</alljoynPasscode>
+</about>

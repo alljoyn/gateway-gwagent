@@ -25,6 +25,7 @@
 
 namespace ajn {
 namespace gw {
+
 using namespace qcc;
 
 GatewayMgmtAppConfig::GatewayMgmtAppConfig()
@@ -37,7 +38,8 @@ GatewayMgmtAppConfig::~GatewayMgmtAppConfig()
 
 QStatus GatewayMgmtAppConfig::loadFromFile(qcc::String const& fileName)
 {
-    std::ifstream ifs(fileName.c_str());
+    m_filePath.assign(fileName.c_str());
+    std::ifstream ifs(m_filePath.c_str());
     std::string content((std::istreambuf_iterator<char>(ifs)),
                         (std::istreambuf_iterator<char>()));
 
@@ -92,12 +94,67 @@ QStatus GatewayMgmtAppConfig::loadFromFile(qcc::String const& fileName)
             m_SoftwareVersion.assign((const char*)value);
         } else if (xmlStrEqual(keyName, (const xmlChar*)"description")) {
             m_Description.assign((const char*)value);
+        } else if (xmlStrEqual(keyName, (const xmlChar*)"alljoynPasscode")) {
+            m_AlljoynPasscode.assign((const char*)value);
         }
     }
 
     xmlFreeParserCtxt(ctxt);
     xmlFreeDoc(doc);
     return ER_OK;
+}
+
+QStatus GatewayMgmtAppConfig::setAlljoynPasscode(const qcc::String& passcode)
+{
+    QStatus status = ER_FAIL;
+    std::ifstream ifs(m_filePath.c_str());
+    std::string content((std::istreambuf_iterator<char>(ifs)),
+                        (std::istreambuf_iterator<char>()));
+
+    if (content.empty()) {
+        QCC_DbgHLPrintf(("Could not read management app config file"));
+        return ER_READ_ERROR;
+    }
+
+    xmlParserCtxtPtr ctxt = xmlNewParserCtxt();
+    if (ctxt == NULL) {
+        QCC_DbgHLPrintf(("Could not create Parser Context"));
+        return ER_OUT_OF_MEMORY;
+    }
+
+    xmlDocPtr doc = xmlCtxtReadMemory(ctxt, content.c_str(), content.size(), NULL, NULL, XML_PARSE_NOERROR | XML_PARSE_NOBLANKS);
+    if (doc == NULL) {
+        QCC_DbgHLPrintf(("Could not parse XML from file"));
+        xmlFreeParserCtxt(ctxt);
+        return ER_XML_MALFORMED;
+    }
+
+    if (ctxt->valid == 0) {
+        QCC_DbgHLPrintf(("Invalid XML - validation failed"));
+        xmlFreeParserCtxt(ctxt);
+        xmlFreeDoc(doc);
+        return ER_BUS_BAD_XML;
+    }
+
+    xmlNode* root_element = xmlDocGetRootElement(doc);
+    for  (xmlNode* currentKey = root_element->children; currentKey != NULL; currentKey = currentKey->next) {
+
+        if (currentKey->type != XML_ELEMENT_NODE || currentKey->children == NULL) {
+            continue;
+        }
+
+        const xmlChar* keyName = currentKey->name;
+
+        if (xmlStrEqual(keyName, (const xmlChar*)"alljoynPasscode")) {
+            xmlNodeSetContent(currentKey, (xmlChar*) passcode.c_str());
+            break;
+        }
+    }
+    xmlSaveFormatFile(m_filePath.c_str(), doc, 1);
+    xmlFreeParserCtxt(ctxt);
+    xmlFreeDoc(doc);
+
+    return status;
 }
 
 const qcc::String& GatewayMgmtAppConfig::getLanguage() const
@@ -138,6 +195,11 @@ const qcc::String& GatewayMgmtAppConfig::getSoftwareVersion() const
 const qcc::String& GatewayMgmtAppConfig::getDescription() const
 {
     return m_Description;
+}
+
+const qcc::String& GatewayMgmtAppConfig::getAlljoynPasscode() const
+{
+    return m_AlljoynPasscode;
 }
 
 }

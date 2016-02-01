@@ -87,8 +87,8 @@ class SrpKeyXListener : public ajn::AuthListener {
     void (*m_GetPassCode)(qcc::String&);
 };
 
-#endif /* SRPKEYLISTENER_H_ */
+}
+}
+}
 
-}
-}
-}
+#endif /* SRPKEYLISTENER_H_ */
