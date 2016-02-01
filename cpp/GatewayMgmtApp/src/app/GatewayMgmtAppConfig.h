@@ -49,6 +49,11 @@ class GatewayMgmtAppConfig {
     QStatus loadFromFile(qcc::String const& fileName);
 
     /**
+     * Set the AllJoyn Passcode fo the Gateway Mangement App
+     */
+    QStatus setAlljoynPasscode(const qcc::String& passcode);
+
+    /**
      * Get the Language for the Gateway Management App
      * @return the language
      */
@@ -96,7 +101,18 @@ class GatewayMgmtAppConfig {
      */
     const qcc::String& getDescription() const;
 
+    /**
+     * Get the AllJoynPasscode for the Gateway Management App
+     * @return the AllJoynPasscode 
+     */
+    const qcc::String& getAlljoynPasscode() const;
+
   private:
+
+    /**
+     * The configuration file path
+     */
+    qcc::String m_filePath;
 
     /**
      * The language of the Gateway Management App
@@ -137,6 +153,12 @@ class GatewayMgmtAppConfig {
      * The Description of the Gateway Management App
      */
     qcc::String m_Description;
+
+    /**
+     * The AllJoynPasscode used to authenticate
+     * with the Gateway Management App
+     */
+    qcc::String m_AlljoynPasscode;
 
 };
 

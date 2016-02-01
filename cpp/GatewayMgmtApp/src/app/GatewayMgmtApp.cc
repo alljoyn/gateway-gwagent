@@ -13,8 +13,6 @@
  *    ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  *    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  ******************************************************************************/
-#include <fstream>
-#include <signal.h>
 #include <alljoyn/PasswordManager.h>
 #include <alljoyn/AboutData.h>
 #include <alljoyn/AboutObj.h>
@@ -22,13 +20,16 @@
 #include <alljoyn/Init.h>
 #include <alljoyn/gateway/GatewayMgmt.h>
 #include <alljoyn/gateway/GatewayBusListener.h>
-#include "../GatewayConstants.h"
 #include <alljoyn/gateway/common/AJInitializer.h>
 #include <alljoyn/gateway/common/SrpKeyXListener.h>
 #include <alljoyn/services_common/GuidUtil.h>
-#include "GatewayMgmtAppConfig.h"
 #include <string.h>
 #include <pthread.h>
+#include <signal.h>
+#include <fstream>
+
+#include "../GatewayConstants.h"
+#include "GatewayMgmtAppConfigListener.h"
 
 using namespace ajn;
 using namespace gw;
@@ -40,6 +41,7 @@ GatewayMgmt* gatewayMgmt = NULL;
 BusAttachment* bus = NULL;
 AboutData* aboutData = NULL;
 GatewayBusListener*  busListener = NULL;
+GatewayMgmtAppConfig* appConfig = NULL;
 SrpKeyXListener* keyListener = NULL;
 static volatile sig_atomic_t s_interrupt = false;
 static volatile sig_atomic_t s_restart = false;
@@ -167,15 +169,13 @@ QStatus fillAboutData()
 
 continueAboutFill:
 
-    GatewayMgmtAppConfig appConfig;
-    appConfig.loadFromFile(gwConsts::GATEWAY_DEFAULT_MGMT_APP_CONF_PATH);
-    const char* language = appConfig.getLanguage().c_str();
+    const char* language = appConfig->getLanguage().c_str();
 
     status = aboutData->SetDeviceId(deviceId.c_str());
     if (status != ER_OK) {
         return status;
     }
-    status = aboutData->SetDeviceName(appConfig.getDeviceName().c_str(), language);
+    status = aboutData->SetDeviceName(appConfig->getDeviceName().c_str(), language);
     if (status != ER_OK) {
         return status;
     }
@@ -183,11 +183,11 @@ continueAboutFill:
     if (status != ER_OK) {
         return status;
     }
-    status = aboutData->SetAppName(appConfig.getAppName().c_str(), "en");
+    status = aboutData->SetAppName(appConfig->getAppName().c_str(), "en");
     if (status != ER_OK) {
         return status;
     }
-    status = aboutData->SetDefaultLanguage(appConfig.getLanguage().c_str());
+    status = aboutData->SetDefaultLanguage(appConfig->getLanguage().c_str());
     if (status != ER_OK) {
         return status;
     }
@@ -195,19 +195,19 @@ continueAboutFill:
     if (status != ER_OK) {
         return status;
     }
-    status = aboutData->SetManufacturer(appConfig.getManufacturer().c_str(), language);
+    status = aboutData->SetManufacturer(appConfig->getManufacturer().c_str(), language);
     if (status != ER_OK) {
         return status;
     }
-    status = aboutData->SetModelNumber(appConfig.getModelNumber().c_str());
+    status = aboutData->SetModelNumber(appConfig->getModelNumber().c_str());
     if (status != ER_OK) {
         return status;
     }
-    status = aboutData->SetSoftwareVersion(appConfig.getSoftwareVersion().c_str());
+    status = aboutData->SetSoftwareVersion(appConfig->getSoftwareVersion().c_str());
     if (status != ER_OK) {
         return status;
     }
-    status = aboutData->SetDescription(appConfig.getDescription().c_str(), language);
+    status = aboutData->SetDescription(appConfig->getDescription().c_str(), language);
     if (status != ER_OK) {
         return status;
     }
@@ -245,11 +245,16 @@ void cleanup()
         delete bus;
         bus = NULL;
     }
+    if (appConfig) {
+        delete appConfig;
+        appConfig = NULL;
+    }
 }
 
 qcc::String appsPolicyDirOption = "--apps-policy-dir=";
 qcc::String policyFileOption = "--gwagent-policy-file=";
 qcc::String routingNodeConfigFileOption = "--config-file=";
+qcc::String gwMgmtAppConfigPathOption = "--gwagent-config-file=";
 
 int main(int argc, char** argv)
 {
@@ -295,8 +300,9 @@ int main(int argc, char** argv)
 
     // Initialize GatewayMgmt object
     gatewayMgmt = GatewayMgmt::getInstance();
-
-
+    // Initialize GatewayMgmtAppConfig object
+    appConfig = new GatewayMgmtAppConfig;
+    qcc::String gwMgmtAppConfig = gwConsts::GATEWAY_DEFAULT_MGMT_APP_CONF_PATH;
     for (int i = 1; i < argc; i++) {
         qcc::String arg(argv[i]);
         if (arg.compare(0, policyFileOption.size(), policyFileOption) == 0) {
@@ -309,7 +315,13 @@ int main(int argc, char** argv)
             QCC_DbgPrintf(("Setting appsPolicyDir to: %s", policyDir.c_str()));
             gatewayMgmt->setAppPolicyDir(policyDir.c_str());
         }
+        if (arg.compare(0, gwMgmtAppConfigPathOption.size(), gwMgmtAppConfigPathOption) == 0) {
+            gwMgmtAppConfig = arg.substr(gwMgmtAppConfigPathOption.size());
+            QCC_DbgPrintf(("Setting gwMgmtAppConfig to: %s", gwMgmtAppConfig.c_str()));
+        }
     }
+
+    appConfig->loadFromFile(gwMgmtAppConfig);
 
     QStatus status = prepareBusAttachment();
     if (status != ER_OK) {
@@ -319,7 +331,7 @@ int main(int argc, char** argv)
     }
 
     keyListener = new SrpKeyXListener();
-    keyListener->setPassCode("000000");
+    keyListener->setPassCode(appConfig->getAlljoynPasscode());
     status = bus->EnablePeerSecurity("ALLJOYN_SRP_KEYX ALLJOYN_ECDHE_PSK", keyListener);
     if (status != ER_OK) {
         QCC_LogError(status, ("Could not enable PeerSecurity"));
@@ -339,6 +351,31 @@ int main(int argc, char** argv)
     status = prepareBusListener();
     if (status != ER_OK) {
         QCC_LogError(status, ("Could not set up the BusListener."));
+        cleanup();
+        return 1;
+    }
+
+    GatewayMgmtAppConfigListener configServiceListener( 
+            keyListener,
+            bus,
+            busListener,
+            appConfig
+            );
+
+    GatewayMgmtAppDataStore configDataStore(NULL, NULL);
+
+    ajn::services::ConfigService configService(*bus, configDataStore, configServiceListener);
+
+    status = configService.Register();
+    if (status != ER_OK) {
+        QCC_LogError(status, ("Could not register the ConfigService"));
+        cleanup();
+        return 1;
+    }
+
+    status = bus->RegisterBusObject(configService);
+    if (status != ER_OK) {
+        QCC_LogError(status, ("Could not register the ConfigService BusObject"));
         cleanup();
         return 1;
     }
