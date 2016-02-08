@@ -35,6 +35,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
+import android.os.Bundle;
 import android.text.Editable;
 import android.text.method.PasswordTransformationMethod;
 import android.util.Log;
@@ -74,7 +75,7 @@ public abstract class BaseActivity extends Activity {
             switch (action) {
 
                 case GWC_PASSWORD_REQUIRED: {
-                    showPasswordDialog();
+                    passwordRequired();
                     break;
                 }
                 case GWC_SESSION_JOINED: {
@@ -119,6 +120,14 @@ public abstract class BaseActivity extends Activity {
      */
     private ProgressDialog progressDialog;
 
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+    	// TODO Auto-generated method stub
+    	super.onCreate(savedInstanceState);
+        app = (GWControllerSampleApplication) getApplicationContext();
+
+    }
+    
     /**
      * @see android.app.Activity#onStart()
      */
@@ -126,7 +135,6 @@ public abstract class BaseActivity extends Activity {
     protected void onStart() {
 
         super.onStart();
-        app = (GWControllerSampleApplication) getApplicationContext();
         registerBaseIntentReceiver();
     }
 
@@ -165,12 +173,20 @@ public abstract class BaseActivity extends Activity {
         return null;
     }
 
+    private static final String WELL_KNOWN_NAME = "org.alljoyn.GWAgent.GMApp";
     /**
      * Override this method to be notified when the session is joined
      */
     protected void onSessionJoined() {
 
         Log.d(TAG, "onSessionJoined is called");
+                
+        //Log.i(TAG, "appname" +  app.getSelectedGatewayApp().getAppName() + 
+//        		"busName" + app.getSelectedGatewayApp().getBusName() +
+//        		"deviceid" + app.getSelectedGatewayApp().getDeviceId() +
+//        		"toString" + app.getSelectedGatewayApp().toString() +
+//        		"deviceName" + app.getSelectedGatewayApp().getDeviceName());
+
         hideProgressDialog();
     }
 
@@ -369,7 +385,7 @@ public abstract class BaseActivity extends Activity {
     /**
      * Create and show password {@link AlertDialog}
      */
-    private void showPasswordDialog() {
+    protected void passwordRequired() {
 
         if (passwordDialog == null) {
 
@@ -401,7 +417,7 @@ public abstract class BaseActivity extends Activity {
 
                     String passcode = passwordEdit.getText().toString();
                     Log.d(TAG, "Password Dialog, received passcode: '" + passcode + "'");
-                    app.setGatewayPasscode(passcode);
+                    //app.setGatewayPasscode(passcode);
 
                     if (passwordDialog != null) {
                         passwordDialog.dismiss();

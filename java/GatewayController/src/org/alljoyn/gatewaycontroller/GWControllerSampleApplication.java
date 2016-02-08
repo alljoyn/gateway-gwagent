@@ -20,6 +20,7 @@ import org.alljoyn.bus.BusAttachment;
 import org.alljoyn.bus.SessionOpts;
 import org.alljoyn.bus.Status;
 import org.alljoyn.bus.alljoyn.DaemonInit;
+import org.alljoyn.config.ConfigServiceImpl;
 import org.alljoyn.gatewaycontroller.sdk.Acl;
 import org.alljoyn.gatewaycontroller.sdk.AclRules;
 import org.alljoyn.gatewaycontroller.sdk.ConnectorApp;
@@ -29,6 +30,9 @@ import org.alljoyn.gatewaycontroller.sdk.GatewayMgmtApp;
 import org.alljoyn.gatewaycontroller.sdk.GatewayMgmtAppListener;
 import org.alljoyn.gatewaycontroller.sdk.RemotedApp;
 import org.alljoyn.gatewaycontroller.sdk.ajcommunication.CommunicationUtil.SessionResult;
+import org.alljoyn.services.android.security.AuthPasswordHandler;
+import org.alljoyn.services.android.security.SrpAnonymousKeyListener;
+import org.alljoyn.services.android.utils.AndroidLogger;
 import org.alljoyn.gatewaycontroller.sdk.ajcommunication.GatewayControllerSessionListener;
 
 import android.app.Application;
@@ -146,28 +150,8 @@ public class GWControllerSampleApplication extends Application implements Gatewa
 
         // Initialize the AJ daemon
         DaemonInit.PrepareDaemon(this);
-        gwController = GatewayController.getInstance();
 
-        try {
-
-            prepareAJ();
-            authManager = new AuthManager(this);
-            authManager.register(bus);
-
-            Log.i(TAG, "The Gateway Controller application has been started, Bus unique name: '" + bus.getUniqueName() + "'");
-
-            gwController.init(bus);
-
-            // Register to receive events about changes in the gateway list
-            gwController.setAnnounceListener(this);
-
-        } catch (GatewayControllerException gce) {
-            Log.e(TAG, "Failed to connect a BusAttachment to the daemon, Error: '" + gce.getMessage() + "'");
-            showToast("Failed to connect to AllJoyn daemon");
-        } catch (Exception e) {
-            Log.e(TAG, "General failure has occurred, Error: '" + e.getMessage() + "'");
-            showToast("General failure has occurred");
-        }
+        
     }
 
     /**
@@ -175,8 +159,19 @@ public class GWControllerSampleApplication extends Application implements Gatewa
      *
      * @param passcode
      */
-    public void setGatewayPasscode(String passcode) {
-        authManager.setPassCode(passcode);
+    public void setGatewayPasscode(String passcode, String busName) {
+    	bus.enableConcurrentCallbacks();
+        authManager.setPassCode(passcode, busName);
+    }
+    
+    /**
+     * Provide the {@link AuthManager} with gateway factoryReset
+     *
+     * @param passcode
+     */
+    public void doGatewayFactoryReset(String busName) {
+    	bus.enableConcurrentCallbacks();
+        authManager.doFactoryReset(busName);
     }
 
     /**
@@ -316,8 +311,10 @@ public class GWControllerSampleApplication extends Application implements Gatewa
      *
      * @throws GatewayControllerException
      */
-    private void prepareAJ() throws GatewayControllerException {
+    public void prepareAJ() throws GatewayControllerException {
 
+        gwController = GatewayController.getInstance();
+    	
         Log.d(TAG, "Create the BusAttachment");
         bus = new BusAttachment("GatewayController", BusAttachment.RemoteMessage.Receive);
 
@@ -332,10 +329,64 @@ public class GWControllerSampleApplication extends Application implements Gatewa
             Log.e(TAG, "Failed connect to bus, Error: '" + conStatus + "'");
             throw new GatewayControllerException("Failed connect to bus, Error: '" + conStatus + "'");
         }
+        
+       /* try {
+			ConfigServiceImpl.getInstance().startConfigClient(bus);
+			String keyStoreFileName = getFileStreamPath("alljoyn_keystore").getAbsolutePath();
+			SrpAnonymousKeyListener m_authListener = new SrpAnonymousKeyListener(passwordHandler, new AndroidLogger(), new String[]{"ALLJOYN_SRP_KEYX", "ALLJOYN_ECDHE_PSK"});
+			Status status = bus.registerAuthListener(m_authListener.getAuthMechanismsAsString(), m_authListener, keyStoreFileName);
+			if (status != Status.OK) {
+				Log.w(TAG, "failed to register authlistener on bus " + bus.getUniqueName() + " : " + status.name());
+			} else {
+				Log.i(TAG, "Started Configuration Service client");
+			}
+			
+		} catch (Exception e) {
+			Log.e(TAG,  "failed to start config client " + e);
+		}
+        */
 
         // Advertise the daemon so that the thin client can find it
         advertiseDaemon();
+        
+        try {
+
+        	authManager = new AuthManager(this);
+            authManager.register(bus);
+
+            Log.i(TAG, "The Gateway Controller application has been started, Bus unique name: '" + bus.getUniqueName() + "'");
+
+            gwController.init(bus);
+
+            // Register to receive events about changes in the gateway list
+            gwController.setAnnounceListener(this);
+
+        } catch (Exception e) {
+            Log.e(TAG, "General failure has occurred, Error: '" + e.getMessage() + "'");
+            showToast("General failure has occurred");
+        }
     }// prepareAJ
+    
+    public void cleanUpAJ() {
+		try {
+			ConfigServiceImpl.getInstance().stopConfigClient();
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		leaveSession();
+		
+    	gwController.shutdown();
+
+		bus.cancelAdvertiseName(DAEMON_QUIET_PREFIX + daemonName, SessionOpts.TRANSPORT_ANY);
+		bus.releaseName(DAEMON_QUIET_PREFIX + daemonName);
+		
+    	bus.disconnect();
+    	
+    	
+    }
+    private String daemonName;
 
     /**
      * Advertise the daemon so that the thin client can find it
@@ -345,7 +396,7 @@ public class GWControllerSampleApplication extends Application implements Gatewa
     private void advertiseDaemon() throws GatewayControllerException {
         int flag = BusAttachment.ALLJOYN_REQUESTNAME_FLAG_DO_NOT_QUEUE;
 
-        String daemonName = DAEMON_NAME_PREFIX + ".G" + bus.getGlobalGUIDString();
+        daemonName = DAEMON_NAME_PREFIX + ".G" + bus.getGlobalGUIDString();
 
         // request the name
         Status reqStatus = bus.requestName(daemonName, flag);
