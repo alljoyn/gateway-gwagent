@@ -19,15 +19,19 @@ package org.alljoyn.gatewaycontroller.activity;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.alljoyn.bus.alljoyn.DaemonInit;
+import org.alljoyn.gatewaycontroller.GWControllerSampleApplication;
 import org.alljoyn.gatewaycontroller.R;
 import org.alljoyn.gatewaycontroller.adapters.DiscoveredGatewaysAdapter;
 import org.alljoyn.gatewaycontroller.adapters.VisualGateway;
 import org.alljoyn.gatewaycontroller.adapters.VisualItem;
 import org.alljoyn.gatewaycontroller.sdk.GatewayController;
+import org.alljoyn.gatewaycontroller.sdk.GatewayControllerException;
 import org.alljoyn.gatewaycontroller.sdk.GatewayMgmtApp;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.preference.PreferenceManager.OnActivityDestroyListener;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
@@ -49,6 +53,11 @@ public class DiscoveredGatewaysActivity extends BaseActivity implements OnItemCl
      * Gateways adapter
      */
     private DiscoveredGatewaysAdapter adapter;
+    
+    @Override
+    protected void passwordRequired() {
+    	
+    };
 
     /**
      * @see org.alljoyn.gatewaycontroller.activity.BaseActivity#onCreate(android.os.Bundle)
@@ -72,13 +81,15 @@ public class DiscoveredGatewaysActivity extends BaseActivity implements OnItemCl
         gatewayListView           = (ListView) findViewById(R.id.gatewaysList);
         List<VisualItem> gateways = new ArrayList<VisualItem>();
 
-        adapter = new DiscoveredGatewaysAdapter(this, R.layout.discovered_gateways_item, gateways);
+        adapter = new DiscoveredGatewaysAdapter(this, R.layout.discovered_gateway_item, gateways);
         gatewayListView.setAdapter(adapter);
         gatewayListView.setEmptyView(findViewById(R.id.discoveredGatewayNoItems));
         gatewayListView.setOnItemClickListener(this);
 
         retrieveGateways();
     }
+    
+    
 
     /**
      * @see org.alljoyn.gatewaycontroller.activity.BaseActivity#onGatewayMgmtAnnounced()
@@ -97,6 +108,7 @@ public class DiscoveredGatewaysActivity extends BaseActivity implements OnItemCl
 
         adapter.clear();
         for (GatewayMgmtApp gw : gatewayApps) {
+        	((GWControllerSampleApplication) getApplicationContext()).doGatewayFactoryReset(gw.getBusName());
             adapter.add(new VisualGateway(gw));
         }
 

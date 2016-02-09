@@ -20,6 +20,7 @@ import org.alljoyn.bus.BusAttachment;
 import org.alljoyn.bus.SessionOpts;
 import org.alljoyn.bus.Status;
 import org.alljoyn.bus.alljoyn.DaemonInit;
+import org.alljoyn.config.ConfigServiceImpl;
 import org.alljoyn.gatewaycontroller.sdk.Acl;
 import org.alljoyn.gatewaycontroller.sdk.AclRules;
 import org.alljoyn.gatewaycontroller.sdk.ConnectorApp;
@@ -29,6 +30,9 @@ import org.alljoyn.gatewaycontroller.sdk.GatewayMgmtApp;
 import org.alljoyn.gatewaycontroller.sdk.GatewayMgmtAppListener;
 import org.alljoyn.gatewaycontroller.sdk.RemotedApp;
 import org.alljoyn.gatewaycontroller.sdk.ajcommunication.CommunicationUtil.SessionResult;
+import org.alljoyn.services.android.security.AuthPasswordHandler;
+import org.alljoyn.services.android.security.SrpAnonymousKeyListener;
+import org.alljoyn.services.android.utils.AndroidLogger;
 import org.alljoyn.gatewaycontroller.sdk.ajcommunication.GatewayControllerSessionListener;
 
 import android.app.Application;
@@ -175,8 +179,19 @@ public class GWControllerSampleApplication extends Application implements Gatewa
      *
      * @param passcode
      */
-    public void setGatewayPasscode(String passcode) {
-        authManager.setPassCode(passcode);
+    public void setGatewayPasscode(String passcode, String busName) {
+    	bus.enableConcurrentCallbacks();
+        authManager.setPassCode(passcode, busName);
+    }
+    
+    /**
+     * Provide the {@link AuthManager} with gateway factoryReset
+     *
+     * @param passcode
+     */
+    public void doGatewayFactoryReset(String busName) {
+    	bus.enableConcurrentCallbacks();
+        authManager.doFactoryReset(busName);
     }
 
     /**
