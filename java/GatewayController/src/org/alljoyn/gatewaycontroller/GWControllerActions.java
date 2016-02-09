@@ -29,5 +29,7 @@ public enum GWControllerActions {
 
     // Gateway actions
     GWC_GATEWAY_ANNOUNCE_RECEIVED,
-    ;
+
+    // Config actions
+    GWC_SET_PASSCODE_FAILED;
 }

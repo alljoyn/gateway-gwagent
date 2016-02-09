@@ -16,17 +16,23 @@
 
 package org.alljoyn.gatewaycontroller.activity;
 
+import java.math.BigInteger;
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.alljoyn.bus.alljoyn.DaemonInit;
+import org.alljoyn.gatewaycontroller.AuthManager;
 import org.alljoyn.gatewaycontroller.R;
 import org.alljoyn.gatewaycontroller.adapters.DiscoveredGatewaysAdapter;
 import org.alljoyn.gatewaycontroller.adapters.VisualGateway;
 import org.alljoyn.gatewaycontroller.adapters.VisualItem;
 import org.alljoyn.gatewaycontroller.sdk.GatewayController;
+import org.alljoyn.gatewaycontroller.sdk.GatewayControllerException;
 import org.alljoyn.gatewaycontroller.sdk.GatewayMgmtApp;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -50,6 +56,23 @@ public class DiscoveredGatewaysActivity extends BaseActivity implements OnItemCl
      */
     private DiscoveredGatewaysAdapter adapter;
 
+    @Override
+    protected void passwordRequired() {
+
+    };
+
+    @Override
+    protected void setPassCodeFailed(String appId) {
+        List<GatewayMgmtApp> gatewayApps = GatewayController.getInstance().getGatewayMgmtApps();
+        for (int position = 0; position < gatewayApps.size(); position ++) {
+            if (gatewayApps.get(position).getAppId().toString().equals(appId)) {
+                ((VisualGateway) adapter.getItem(position)).isAuthenticated = false;
+                adapter.notifyDataSetChanged();
+                break;
+            }
+        }
+    }
+
     /**
      * @see org.alljoyn.gatewaycontroller.activity.BaseActivity#onCreate(android.os.Bundle)
      */
@@ -69,10 +92,10 @@ public class DiscoveredGatewaysActivity extends BaseActivity implements OnItemCl
 
         super.onStart();
 
-        gatewayListView           = (ListView) findViewById(R.id.gatewaysList);
+        gatewayListView = (ListView) findViewById(R.id.gatewaysList);
         List<VisualItem> gateways = new ArrayList<VisualItem>();
 
-        adapter = new DiscoveredGatewaysAdapter(this, R.layout.discovered_gateways_item, gateways);
+        adapter = new DiscoveredGatewaysAdapter(this, R.layout.discovered_gateway_item, gateways);
         gatewayListView.setAdapter(adapter);
         gatewayListView.setEmptyView(findViewById(R.id.discoveredGatewayNoItems));
         gatewayListView.setOnItemClickListener(this);
@@ -88,15 +111,22 @@ public class DiscoveredGatewaysActivity extends BaseActivity implements OnItemCl
         retrieveGateways();
     }
 
+
     /**
      * Retrieve the list of gateways
      */
     private void retrieveGateways() {
 
+        SharedPreferences sharedPreferences = getSharedPreferences(AuthManager.SHARED_PREFERENCES_PASSCODES_NAME, MODE_PRIVATE);
+
         List<GatewayMgmtApp> gatewayApps = GatewayController.getInstance().getGatewayMgmtApps();
+
 
         adapter.clear();
         for (GatewayMgmtApp gw : gatewayApps) {
+
+            app.setGatewayPasscode((new BigInteger(160, new SecureRandom())).toString(32), gw.getBusName(), gw.getAppId().toString());
+           
             adapter.add(new VisualGateway(gw));
         }
 
@@ -115,12 +145,13 @@ public class DiscoveredGatewaysActivity extends BaseActivity implements OnItemCl
 
         app.setSelectedGatewayApp(vg.getGateway());
 
-        // If we have an old session, we need to close it when selecting a new gateway
+        // If we have an old session, we need to close it when selecting a new
+        // gateway
         app.leaveSession();
 
         Intent intent = new Intent(this, ConnectorAppsActivity.class);
-        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+        intent.setFlags(
+                Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
         startActivity(intent);
     }
-
 }

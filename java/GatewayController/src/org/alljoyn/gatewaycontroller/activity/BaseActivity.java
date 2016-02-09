@@ -18,6 +18,7 @@ package org.alljoyn.gatewaycontroller.activity;
 
 import java.util.List;
 
+import org.alljoyn.gatewaycontroller.AuthManager;
 import org.alljoyn.gatewaycontroller.GWControllerActions;
 import org.alljoyn.gatewaycontroller.GWControllerSampleApplication;
 import org.alljoyn.gatewaycontroller.R;
@@ -35,6 +36,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
+import android.os.Bundle;
 import android.text.Editable;
 import android.text.method.PasswordTransformationMethod;
 import android.util.Log;
@@ -73,28 +75,29 @@ public abstract class BaseActivity extends Activity {
 
             switch (action) {
 
-                case GWC_PASSWORD_REQUIRED: {
-                    showPasswordDialog();
-                    break;
-                }
-                case GWC_SESSION_JOINED: {
-                    onSessionJoined();
-                    break;
-                }
-                case GWC_SESSION_JOIN_FAILED: {
-                    onSessionJoinFailed();
-                    break;
-                }
-                case GWC_GATEWAY_ANNOUNCE_RECEIVED: {
-                    onGatewayMgmtAppAnnounced();
-                    break;
-                }
-                default: {
-                    Log.w(TAG, "Received an Action: '" + action + "' unsupported by the BaseBroadcastReceiver");
-                }
+            case GWC_PASSWORD_REQUIRED:
+                passwordRequired();
+                break;
+            case GWC_SESSION_JOINED:
+                onSessionJoined();
+                break;
+            case GWC_SESSION_JOIN_FAILED:
+                onSessionJoinFailed();
+                break;
+            case GWC_GATEWAY_ANNOUNCE_RECEIVED:
+                onGatewayMgmtAppAnnounced();
+                break;
+            case GWC_SET_PASSCODE_FAILED:
+                setPassCodeFailed(intent.getStringExtra(AuthManager.INTENT_EXTRA_APP_ID));
+                break;
+            default:
+                Log.w(TAG, "Received an Action: '" + action + "' unsupported by the BaseBroadcastReceiver");
             }
 
         }// onReceive
+    }
+
+    protected void setPassCodeFailed(String appId) {
     }
 
     // ===========================================//
@@ -171,6 +174,7 @@ public abstract class BaseActivity extends Activity {
     protected void onSessionJoined() {
 
         Log.d(TAG, "onSessionJoined is called");
+
         hideProgressDialog();
     }
 
@@ -193,12 +197,14 @@ public abstract class BaseActivity extends Activity {
     }
 
     /**
-     * Override this method to be notified when an Announcement from a {@link GatewayMgmtApp} is received. <br>
+     * Override this method to be notified when an Announcement from a
+     * {@link GatewayMgmtApp} is received. <br>
      *
      * <br>
-     * By default this method retrieves the list of the found {@link GatewayMgmtApp}s.
-     * If currently selected gateway app is not in the list of the retrieved gateways,
-     * the method {@link BaseActivity#onSelectedGatewayLost()} is called.
+     * By default this method retrieves the list of the found
+     * {@link GatewayMgmtApp}s. If currently selected gateway app is not in the
+     * list of the retrieved gateways, the method
+     * {@link BaseActivity#onSelectedGatewayLost()} is called.
      */
     protected void onGatewayMgmtAppAnnounced() {
 
@@ -276,7 +282,8 @@ public abstract class BaseActivity extends Activity {
      * @param clickListener
      *            The listener to be called
      */
-    protected void showOkDialog(String title, String message, String btnLabel, final DialogInterface.OnClickListener clickListener) {
+    protected void showOkDialog(String title, String message, String btnLabel,
+            final DialogInterface.OnClickListener clickListener) {
 
         final AlertDialog.Builder builder = createAlertDialog(title, message);
         builder.setPositiveButton(btnLabel, new DialogInterface.OnClickListener() {
@@ -305,7 +312,8 @@ public abstract class BaseActivity extends Activity {
 
                 dialog.dismiss();
                 Intent intent = new Intent(app, DiscoveredGatewaysActivity.class);
-                intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+                intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP
+                        | Intent.FLAG_ACTIVITY_NEW_TASK);
                 startActivity(intent);
             }
         });
@@ -330,16 +338,16 @@ public abstract class BaseActivity extends Activity {
 
         switch (currentRotation) {
 
-            case Configuration.ORIENTATION_PORTRAIT: {
+        case Configuration.ORIENTATION_PORTRAIT: {
 
-                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
-                break;
-            }
-            case Configuration.ORIENTATION_LANDSCAPE: {
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+            break;
+        }
+        case Configuration.ORIENTATION_LANDSCAPE: {
 
-                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
-                break;
-            }
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+            break;
+        }
         }
     }
 
@@ -356,7 +364,7 @@ public abstract class BaseActivity extends Activity {
      */
     private void registerBaseIntentReceiver() {
 
-        broadcastReceiver    = new BaseBroadcastReceiver();
+        broadcastReceiver = new BaseBroadcastReceiver();
 
         IntentFilter filters = new IntentFilter();
         for (GWControllerActions action : GWControllerActions.values()) {
@@ -369,16 +377,16 @@ public abstract class BaseActivity extends Activity {
     /**
      * Create and show password {@link AlertDialog}
      */
-    private void showPasswordDialog() {
+    protected void passwordRequired() {
 
         if (passwordDialog == null) {
 
             // Create password dialog
             final View confirmPasswordLayout = getLayoutInflater().inflate(R.layout.alert_confirm_password, null);
-            final TextView titleView         = (TextView) confirmPasswordLayout.findViewById(R.id.alert_pwd_title_text_view);
-            final TextView messageTxt        = (TextView) confirmPasswordLayout.findViewById(R.id.alert_pwd_msg_text_view);
-            final Button posBtn              = (Button) confirmPasswordLayout.findViewById(R.id.alert_pwd_button_pos);
-            final EditText passwordEdit      = (EditText) confirmPasswordLayout.findViewById(R.id.alert_pwd_edit);
+            final TextView titleView = (TextView) confirmPasswordLayout.findViewById(R.id.alert_pwd_title_text_view);
+            final TextView messageTxt = (TextView) confirmPasswordLayout.findViewById(R.id.alert_pwd_msg_text_view);
+            final Button posBtn = (Button) confirmPasswordLayout.findViewById(R.id.alert_pwd_button_pos);
+            final EditText passwordEdit = (EditText) confirmPasswordLayout.findViewById(R.id.alert_pwd_edit);
 
             // Create Builder
             final AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -401,7 +409,7 @@ public abstract class BaseActivity extends Activity {
 
                     String passcode = passwordEdit.getText().toString();
                     Log.d(TAG, "Password Dialog, received passcode: '" + passcode + "'");
-                    app.setGatewayPasscode(passcode);
+                    // app.setGatewayPasscode(passcode);
 
                     if (passwordDialog != null) {
                         passwordDialog.dismiss();
@@ -428,7 +436,7 @@ public abstract class BaseActivity extends Activity {
 
             passwordDialog = builder.create();
             passwordDialog.setCanceledOnTouchOutside(false);
-        }// if :: passwordDialog == null
+        } // if :: passwordDialog == null
 
         if (!passwordDialog.isShowing()) {
 
