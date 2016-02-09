@@ -24,6 +24,8 @@ import org.alljoyn.gatewaycontroller.sdk.GatewayMgmtApp;
 public class VisualGateway implements VisualItem {
 
     private GatewayMgmtApp gateway;
+    
+    public boolean isAuthenticated;
 
     /**
      * Constructor
@@ -34,6 +36,7 @@ public class VisualGateway implements VisualItem {
     public VisualGateway(GatewayMgmtApp gateway) {
 
         this.gateway = gateway;
+        isAuthenticated = true;
     }
 
     /**
