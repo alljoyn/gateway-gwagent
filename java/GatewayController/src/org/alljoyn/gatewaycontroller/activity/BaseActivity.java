@@ -120,6 +120,13 @@ public abstract class BaseActivity extends Activity {
      */
     private ProgressDialog progressDialog;
 
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        app = (GWControllerSampleApplication) getApplicationContext();
+
+    }
+    
     /**
      * @see android.app.Activity#onStart()
      */
@@ -127,7 +134,6 @@ public abstract class BaseActivity extends Activity {
     protected void onStart() {
 
         super.onStart();
-        app = (GWControllerSampleApplication) getApplicationContext();
         registerBaseIntentReceiver();
     }
 
@@ -175,10 +181,10 @@ public abstract class BaseActivity extends Activity {
         Log.d(TAG, "onSessionJoined is called");
                 
         //Log.i(TAG, "appname" +  app.getSelectedGatewayApp().getAppName() + 
-//        		"busName" + app.getSelectedGatewayApp().getBusName() +
-//        		"deviceid" + app.getSelectedGatewayApp().getDeviceId() +
-//        		"toString" + app.getSelectedGatewayApp().toString() +
-//        		"deviceName" + app.getSelectedGatewayApp().getDeviceName());
+        //"busName" + app.getSelectedGatewayApp().getBusName() +
+        //"deviceid" + app.getSelectedGatewayApp().getDeviceId() +
+        //"toString" + app.getSelectedGatewayApp().toString() +
+        //"deviceName" + app.getSelectedGatewayApp().getDeviceName());
 
         hideProgressDialog();
     }
