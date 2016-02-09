@@ -240,6 +240,8 @@ public class ConnectorAppsActivity extends BaseActivity implements OnClickListen
     private void retrieveApps() {
 
         final Integer sid = getSession();
+        
+        
         if (sid == null) {
 
             Log.d(TAG, "Can't retrieve Connector Applications, no session with the GW is established, waiting for" +
