@@ -96,12 +96,13 @@ public class GatewayController {
     public void shutdown() {
 
         Log.i(TAG, "Shutting down the GatewayController");
-        bus = null;
 
         if (announceManager != null) {
             announceManager.clear();
             announceManager = null;
         }
+        
+        bus = null;
     }
 
     /**

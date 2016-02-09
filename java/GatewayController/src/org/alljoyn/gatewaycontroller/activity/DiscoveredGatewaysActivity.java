@@ -68,6 +68,16 @@ public class DiscoveredGatewaysActivity extends BaseActivity implements OnItemCl
         setContentView(R.layout.discovered_gateways);
 
         setTitle(R.string.discovered_gateways_activity);
+        
+     // Initialize the AJ daemon
+        DaemonInit.PrepareDaemon(this);
+        
+        try {
+			app.prepareAJ();
+		} catch (GatewayControllerException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
     }
 
     /**
@@ -133,6 +143,12 @@ public class DiscoveredGatewaysActivity extends BaseActivity implements OnItemCl
         Intent intent = new Intent(this, ConnectorAppsActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
         startActivity(intent);
+    }
+    
+    @Override
+    protected void onDestroy() {
+    	super.onDestroy();
+    	app.cleanUpAJ();
     }
 
 }

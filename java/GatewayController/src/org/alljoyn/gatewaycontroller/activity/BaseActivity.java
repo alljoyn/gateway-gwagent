@@ -120,6 +120,14 @@ public abstract class BaseActivity extends Activity {
      */
     private ProgressDialog progressDialog;
 
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+    	// TODO Auto-generated method stub
+    	super.onCreate(savedInstanceState);
+        app = (GWControllerSampleApplication) getApplicationContext();
+
+    }
+    
     /**
      * @see android.app.Activity#onStart()
      */
@@ -127,7 +135,6 @@ public abstract class BaseActivity extends Activity {
     protected void onStart() {
 
         super.onStart();
-        app = (GWControllerSampleApplication) getApplicationContext();
         registerBaseIntentReceiver();
     }
 
