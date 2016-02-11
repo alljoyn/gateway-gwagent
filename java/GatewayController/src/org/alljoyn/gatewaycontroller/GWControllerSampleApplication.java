@@ -75,7 +75,7 @@ public class GWControllerSampleApplication extends Application implements Gatewa
             super.sessionJoined(result);
 
             GWControllerSampleApplication app = GWControllerSampleApplication.this;
-            Status status                     = result.getStatus();
+            Status status = result.getStatus();
 
             if (status == Status.OK || status == Status.ALLJOYN_JOINSESSION_REPLY_ALREADY_JOINED) {
 
@@ -95,7 +95,7 @@ public class GWControllerSampleApplication extends Application implements Gatewa
      * The daemon should advertise itself "quietly" (directly to the calling
      * port) This is to reply directly to a TC looking for a daemon
      */
-    private static final String DAEMON_NAME_PREFIX  = "org.alljoyn.BusNode.IoeService";
+    private static final String DAEMON_NAME_PREFIX = "org.alljoyn.BusNode.IoeService";
 
     /**
      * The daemon should advertise itself "quietly" (directly to the calling
@@ -148,10 +148,6 @@ public class GWControllerSampleApplication extends Application implements Gatewa
         super.onCreate();
         Log.i(TAG, "Starting the Gateway Controller application");
 
-        
-       
-
-        
     }
 
     /**
@@ -159,18 +155,18 @@ public class GWControllerSampleApplication extends Application implements Gatewa
      *
      * @param passcode
      */
-    public void setGatewayPasscode(String passcode, String busName) {
-    	bus.enableConcurrentCallbacks();
-        authManager.setPassCode(passcode, busName);
+    public void setGatewayPasscode(String passcode, String busName, String appId) {
+        bus.enableConcurrentCallbacks();
+        authManager.setPassCode(passcode, busName, appId);
     }
-    
+
     /**
      * Provide the {@link AuthManager} with gateway factoryReset
      *
      * @param passcode
      */
     public void doGatewayFactoryReset(String busName) {
-    	bus.enableConcurrentCallbacks();
+        bus.enableConcurrentCallbacks();
         authManager.doFactoryReset(busName);
     }
 
@@ -213,7 +209,7 @@ public class GWControllerSampleApplication extends Application implements Gatewa
         if (status == Status.OK || status == Status.ALLJOYN_LEAVESESSION_REPLY_NO_SESSION) {
 
             sessionId = null;
-        } 
+        }
     }
 
     /**
@@ -291,7 +287,7 @@ public class GWControllerSampleApplication extends Application implements Gatewa
 
             Log.v(TAG, "App: '" + remApp + "', ObjDesc: '" + remApp.getRuleObjectDescriptions() + "'");
             Log.v(TAG, "------------------------------------------------");
-        }// for :: remotedApp
+        } // for :: remotedApp
 
         Log.d(TAG, "========================= ");
     }
@@ -314,7 +310,7 @@ public class GWControllerSampleApplication extends Application implements Gatewa
     public void prepareAJ() throws GatewayControllerException {
 
         gwController = GatewayController.getInstance();
-    	
+
         Log.d(TAG, "Create the BusAttachment");
         bus = new BusAttachment("GatewayController", BusAttachment.RemoteMessage.Receive);
 
@@ -332,13 +328,14 @@ public class GWControllerSampleApplication extends Application implements Gatewa
 
         // Advertise the daemon so that the thin client can find it
         advertiseDaemon();
-        
+
         try {
 
-        	authManager = new AuthManager(this);
+            authManager = new AuthManager(this);
             authManager.register(bus);
 
-            Log.i(TAG, "The Gateway Controller application has been started, Bus unique name: '" + bus.getUniqueName() + "'");
+            Log.i(TAG, "The Gateway Controller application has been started, Bus unique name: '" + bus.getUniqueName()
+                    + "'");
 
             gwController.init(bus);
 
@@ -350,24 +347,25 @@ public class GWControllerSampleApplication extends Application implements Gatewa
             showToast("General failure has occurred");
         }
     }// prepareAJ
-    
-    public void cleanUpAJ() {
-		try {
-			ConfigServiceImpl.getInstance().stopConfigClient();
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-				
-    	gwController.shutdown();
 
-		bus.cancelAdvertiseName(DAEMON_QUIET_PREFIX + daemonName, SessionOpts.TRANSPORT_ANY);
-		bus.releaseName(DAEMON_QUIET_PREFIX + daemonName);
-		bus.release();
-    	bus.disconnect();
-    	bus = null;
-    	
+    public void cleanUpAJ() {
+        try {
+            ConfigServiceImpl.getInstance().stopConfigClient();
+        } catch (Exception e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+
+        gwController.shutdown();
+
+        bus.cancelAdvertiseName(DAEMON_QUIET_PREFIX + daemonName, SessionOpts.TRANSPORT_ANY);
+        bus.releaseName(DAEMON_QUIET_PREFIX + daemonName);
+        bus.release();
+        bus.disconnect();
+        bus = null;
+
     }
+
     private String daemonName;
 
     /**
@@ -391,13 +389,15 @@ public class GWControllerSampleApplication extends Application implements Gatewa
 
                 bus.releaseName(daemonName);
                 Log.e(TAG, "Failed to advertise daemon name " + daemonName + ", Error: '" + adStatus + "'");
-                throw new GatewayControllerException("Failed to advertise daemon name '" + daemonName + " ', Error: '" + adStatus + "'");
+                throw new GatewayControllerException(
+                        "Failed to advertise daemon name '" + daemonName + " ', Error: '" + adStatus + "'");
             } else {
                 Log.d(TAG, "Succefully advertised daemon name: '" + daemonName + "'");
             }
         } else {
             Log.d(TAG, "Failed to request the daemon name: '" + daemonName + "', Error: '" + reqStatus + "' ");
-            throw new GatewayControllerException("Failed to request the DaemonName: '" + daemonName + "',  Error: '" + reqStatus + "'");
+            throw new GatewayControllerException(
+                    "Failed to request the DaemonName: '" + daemonName + "',  Error: '" + reqStatus + "'");
         }
 
     }// advertiseDaemon

@@ -16,11 +16,13 @@
 
 package org.alljoyn.gatewaycontroller.activity;
 
+import java.math.BigInteger;
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.alljoyn.bus.alljoyn.DaemonInit;
-import org.alljoyn.gatewaycontroller.GWControllerSampleApplication;
+import org.alljoyn.gatewaycontroller.AuthManager;
 import org.alljoyn.gatewaycontroller.R;
 import org.alljoyn.gatewaycontroller.adapters.DiscoveredGatewaysAdapter;
 import org.alljoyn.gatewaycontroller.adapters.VisualGateway;
@@ -29,9 +31,12 @@ import org.alljoyn.gatewaycontroller.sdk.GatewayController;
 import org.alljoyn.gatewaycontroller.sdk.GatewayControllerException;
 import org.alljoyn.gatewaycontroller.sdk.GatewayMgmtApp;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.preference.PreferenceManager.OnActivityDestroyListener;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
@@ -53,11 +58,23 @@ public class DiscoveredGatewaysActivity extends BaseActivity implements OnItemCl
      * Gateways adapter
      */
     private DiscoveredGatewaysAdapter adapter;
-    
+
     @Override
     protected void passwordRequired() {
-    	
+
     };
+
+    @Override
+	protected void setPassCodeFailed(String appId) {
+		List<GatewayMgmtApp> gatewayApps = GatewayController.getInstance().getGatewayMgmtApps();
+		for (int position = 0; position < gatewayApps.size(); position ++) {
+			if (gatewayApps.get(position).getAppId().toString().equals(appId)) {
+				((VisualGateway) adapter.getItem(position)).isAuthenticated = false;
+				adapter.notifyDataSetChanged();
+				break;
+			}
+		}
+	}
 
     /**
      * @see org.alljoyn.gatewaycontroller.activity.BaseActivity#onCreate(android.os.Bundle)
@@ -68,16 +85,16 @@ public class DiscoveredGatewaysActivity extends BaseActivity implements OnItemCl
         setContentView(R.layout.discovered_gateways);
 
         setTitle(R.string.discovered_gateways_activity);
-        
-     // Initialize the AJ daemon
+
+        // Initialize the AJ daemon
         DaemonInit.PrepareDaemon(this);
-        
+
         try {
-			app.prepareAJ();
-		} catch (GatewayControllerException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+            app.prepareAJ();
+        } catch (GatewayControllerException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -88,7 +105,7 @@ public class DiscoveredGatewaysActivity extends BaseActivity implements OnItemCl
 
         super.onStart();
 
-        gatewayListView           = (ListView) findViewById(R.id.gatewaysList);
+        gatewayListView = (ListView) findViewById(R.id.gatewaysList);
         List<VisualItem> gateways = new ArrayList<VisualItem>();
 
         adapter = new DiscoveredGatewaysAdapter(this, R.layout.discovered_gateway_item, gateways);
@@ -98,8 +115,6 @@ public class DiscoveredGatewaysActivity extends BaseActivity implements OnItemCl
 
         retrieveGateways();
     }
-    
-    
 
     /**
      * @see org.alljoyn.gatewaycontroller.activity.BaseActivity#onGatewayMgmtAnnounced()
@@ -109,16 +124,28 @@ public class DiscoveredGatewaysActivity extends BaseActivity implements OnItemCl
         retrieveGateways();
     }
 
+
     /**
      * Retrieve the list of gateways
      */
     private void retrieveGateways() {
 
+        SharedPreferences sharedPreferences = getSharedPreferences(AuthManager.SHARED_PREFERENCES_PASSCODES_NAME, MODE_PRIVATE);
+
         List<GatewayMgmtApp> gatewayApps = GatewayController.getInstance().getGatewayMgmtApps();
+
 
         adapter.clear();
         for (GatewayMgmtApp gw : gatewayApps) {
-        	((GWControllerSampleApplication) getApplicationContext()).doGatewayFactoryReset(gw.getBusName());
+
+            //check if passcode is stored. If it is not stored, then set it.
+            // I commented out the if statement, because it did not include behavior for when
+            // passcode is changed from the configfile.
+            
+            //if (sharedPreferences.getString(gw.getAppId().toString(), "").equals("")) {
+                app.setGatewayPasscode((new BigInteger(160, new SecureRandom())).toString(32), gw.getBusName(), gw.getAppId().toString());
+            //}
+           
             adapter.add(new VisualGateway(gw));
         }
 
@@ -137,18 +164,20 @@ public class DiscoveredGatewaysActivity extends BaseActivity implements OnItemCl
 
         app.setSelectedGatewayApp(vg.getGateway());
 
-        // If we have an old session, we need to close it when selecting a new gateway
+        // If we have an old session, we need to close it when selecting a new
+        // gateway
         app.leaveSession();
 
         Intent intent = new Intent(this, ConnectorAppsActivity.class);
-        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+        intent.setFlags(
+                Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
         startActivity(intent);
     }
-    
+
     @Override
     protected void onDestroy() {
-    	super.onDestroy();
-    	app.cleanUpAJ();
+        super.onDestroy();
+        app.cleanUpAJ();
     }
 
 }

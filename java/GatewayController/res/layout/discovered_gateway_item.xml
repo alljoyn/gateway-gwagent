@@ -13,14 +13,13 @@
         android:paddingBottom="20dp"
         android:paddingTop="20dp"
         android:textSize="17sp" />
-    
-    <ImageView 
+
+    <ImageView
         android:id="@+id/discoveredGatewayLocked"
         android:layout_width="0dp"
         android:layout_height="match_parent"
         android:layout_weight="1"
         android:padding="10dp"
-        android:src="@drawable/chariotjoin_lockicon"/>
-    
+        android:src="@drawable/chariotjoin_lockicon" />
 
 </LinearLayout>

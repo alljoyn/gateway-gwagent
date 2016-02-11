@@ -71,8 +71,17 @@ public class DiscoveredGatewaysAdapter extends VisualArrayAdapter {
         
         ImageView imageView = (ImageView) row.findViewById(R.id.discoveredGatewayLocked);
         
+        imageView.setVisibility(vg.isAuthenticated ? View.GONE : View.VISIBLE);
+       
 
         return row;
+    }
+    
+    @Override
+    public boolean isEnabled(int position) {
+    	// TODO Auto-generated method stub
+        VisualGateway vg = (VisualGateway) getItem(position);
+        return vg.isAuthenticated;
     }
 
 }
