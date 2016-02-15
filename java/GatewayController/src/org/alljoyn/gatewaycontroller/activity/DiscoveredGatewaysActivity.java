@@ -31,9 +31,6 @@ import org.alljoyn.gatewaycontroller.sdk.GatewayController;
 import org.alljoyn.gatewaycontroller.sdk.GatewayControllerException;
 import org.alljoyn.gatewaycontroller.sdk.GatewayMgmtApp;
 
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
-
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
