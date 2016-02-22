@@ -1,5 +1,5 @@
 /******************************************************************************
- * Copyright (c) 2014, AllSeen Alliance. All rights reserved.
+ * Copyright AllSeen Alliance. All rights reserved.
  *
  *    Permission to use, copy, modify, and/or distribute this software for any
  *    purpose with or without fee is hereby granted, provided that the above
@@ -14,46 +14,48 @@
  *    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  ******************************************************************************/
 
-#include <alljoyn/gateway/PackageManager.h>
+#ifndef AJINITIALIZER_H_
+#define AJINITIALIZER_H_
+
+#include <alljoyn/Status.h>
+
+/**
+ * class AJInitializer
+ * Utility class for handling AllJoyn lifecycle methods
+ */
 
 namespace ajn {
 namespace gw {
+namespace common {
 
-PackageManager::PackageManager() {
-    pmImpl = new PackageManagerImpl;
+class AJInitializer {
+  public:
+    /**
+     * Calls AllJoynInit(). If bundled router is enabled it also calls AllJoynRouterInit()
+     * @return ER_OK if initialization succeeded
+     */
+    AJInitializer();
+
+    /**
+     * ~AJInitializer
+     * Calls AllJoynRouterShutdown() if bundled router is enabled and then calls AllJoynShutdown()
+     */
+    ~AJInitializer();
+
+    /*
+     * Return the status of AllJoynInit and AllJoynRouterInit
+     * @return QStatus
+     */
+    QStatus Status() const;
+
+  private:
+    /*
+     * Status of AllJoynInit and AllJoynRouterInit
+     */
+    QStatus m_Status;
+};
+
 }
-
-PackageManager::~PackageManager() {
-    if (pmImpl) {
-        delete pmImpl;
-    }
 }
-
-void PackageManager::InstallApp(
-    const String& appId,
-    const String& packageName,
-    const String& appVersion,
-    const String& downloadUrl,
-    bool upgradeFlag,
-    const String& unixUserId,
-    QStatus& responseStatus) {
-
-    pmImpl->InstallApp(appId,
-                       packageName,
-                       appVersion,
-                       downloadUrl,
-                       upgradeFlag,
-                       unixUserId,
-                       responseStatus);
 }
-
-void PackageManager::UninstallApp(
-    const String& appId,
-    QStatus& responseStatus) {
-
-    pmImpl->UninstallApp(appId,
-                         responseStatus);
-}
-
-} /* namespace gw */
-} /* namespace ajn */
+#endif /* AJINITIALIZERGWAGENT_H_ */

@@ -13,25 +13,28 @@
 #    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 Import('gateway_env')
-import os
+import os.path
 
+gwpkg_env = gateway_env.Clone()
 
-#if gateway_env.has_key('GTEST_DIR'):
-#  programName = 'PackageManagerGtest'
-#  excluded = 'pmcl.cc'
-#  gateway_env.Append(LIBS = ['gtest'])
-#  gateway_env.Append(LIBS = ['gtest_main'])
-#else :  
-excluded = 'pmgtest.cc' 	
-programName = 'PackageManagerCL'
+def filtered_glob(env, pattern, omit=[], ondisk=True, source=False, strings=False):
+   return filter(
+         lambda f: os.path.basename(f.path) not in omit,
+         env.Glob(pattern))
 
-srcs = gateway_env.Object([f for f in Glob('*.cc')
-    if excluded not in f.path])
-    
-print 'building PM version ' + programName	
+gwpkg_env.AddMethod(filtered_glob, "FilteredGlob")
 
-gateway_env.Append(LIBPATH =['/usr/lib'])
-gateway_env.Append(LIBS = ['curl'])
+libs = []
 
-prog = gateway_env.Program(programName, srcs )
-Return('prog')
+excluded = ['pmcl.cc', 'pmgtest.cc']
+srcs = gwpkg_env.FilteredGlob('*.cc', excluded)
+
+objs = gwpkg_env.Object(srcs)
+libs.append(gwpkg_env.StaticLibrary('alljoyn_gwpkgmanager', objs))
+
+# Shared library
+if gwpkg_env.get('LIBTYPE', 'static') != 'static':
+    shobjs = gwpkg_env.SharedObject(srcs)
+    libs.append(gwpkg_env.SharedLibrary('alljoyn_gwpkgmanager', shobjs))
+
+Return('libs')

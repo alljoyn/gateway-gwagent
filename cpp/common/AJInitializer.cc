@@ -1,5 +1,5 @@
 /******************************************************************************
- * Copyright (c) 2014, AllSeen Alliance. All rights reserved.
+ * Copyright AllSeen Alliance. All rights reserved.
  *
  *    Permission to use, copy, modify, and/or distribute this software for any
  *    purpose with or without fee is hereby granted, provided that the above
@@ -14,46 +14,39 @@
  *    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  ******************************************************************************/
 
-#include <alljoyn/gateway/PackageManager.h>
+#include "AJInitializer.h"
+#include <alljoyn/Init.h>
 
 namespace ajn {
 namespace gw {
+namespace common {
 
-PackageManager::PackageManager() {
-    pmImpl = new PackageManagerImpl;
-}
-
-PackageManager::~PackageManager() {
-    if (pmImpl) {
-        delete pmImpl;
+AJInitializer::AJInitializer()
+{
+    m_Status = AllJoynInit();
+#ifdef ROUTER
+    if (m_Status == ER_OK) {
+        m_Status = AllJoynRouterInit();
+        if (m_Status != ER_OK) {
+            AllJoynShutdown();
+        }
     }
+#endif
 }
 
-void PackageManager::InstallApp(
-    const String& appId,
-    const String& packageName,
-    const String& appVersion,
-    const String& downloadUrl,
-    bool upgradeFlag,
-    const String& unixUserId,
-    QStatus& responseStatus) {
-
-    pmImpl->InstallApp(appId,
-                       packageName,
-                       appVersion,
-                       downloadUrl,
-                       upgradeFlag,
-                       unixUserId,
-                       responseStatus);
+AJInitializer::~AJInitializer()
+{
+#ifdef ROUTER
+    AllJoynRouterShutdown();
+#endif
+    AllJoynShutdown();
 }
 
-void PackageManager::UninstallApp(
-    const String& appId,
-    QStatus& responseStatus) {
-
-    pmImpl->UninstallApp(appId,
-                         responseStatus);
+QStatus AJInitializer::Status() const
+{
+    return m_Status;
 }
 
-} /* namespace gw */
-} /* namespace ajn */
+}
+}
+}

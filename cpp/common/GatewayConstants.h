@@ -1,5 +1,5 @@
 /******************************************************************************
- * Copyright (c) 2014, AllSeen Alliance. All rights reserved.
+ * Copyright AllSeen Alliance. All rights reserved.
  *
  *    Permission to use, copy, modify, and/or distribute this software for any
  *    purpose with or without fee is hereby granted, provided that the above
@@ -65,7 +65,6 @@ static const qcc::String AJ_GW_OBJECTPATH = "/gw";
 static const qcc::String AJ_GW_APP_WKN_PREFIX = "org.alljoyn.GWAgent.Connector.";
 static const qcc::String AJ_PROPERTY_VERSION = "Version";
 
-static const qcc::String AJ_PKG_MNGR_INTERFACE = "org.alljoyn.gwagent.ctrl.PkgManager";
 static const qcc::String AJ_GW_APP_MGMT_INTERFACE = "org.alljoyn.gwagent.ctrl.AppMgmt";
 static const qcc::String AJ_GW_APP_INTERFACE = "org.alljoyn.gwagent.ctrl.App";
 static const qcc::String AJ_GW_APP_CONNECTOR_INTERFACE = "org.alljoyn.gwagent.connector.App";
@@ -168,20 +167,9 @@ static const qcc::String AJ_SIGNAL_SHUTDOWN_APP = "ShutdownApp";
 static const qcc::String& AJ_SHUTDOWN_APP_PARAMS = AJPARAM_EMPTY;
 static const qcc::String& AJ_SHUTDOWN_APP_PARAM_NAMES = AJPARAM_EMPTY;
 
-static const qcc::String AJ_METHOD_INSTALL_APP = "InstallApp";
-static const qcc::String AJ_INSTALL_APP_PARAMS_NAMES = "appName,appVersion,downloadUrl,appId,userId,groupdId,upgrade,status";
-static const qcc::String AJ_INSTALL_APP_PARAMS_IN = AJPARAM_STR + AJPARAM_STR + AJPARAM_STR + AJPARAM_STR + AJPARAM_STR + AJPARAM_STR + AJPARAM_BOOL;
-static const qcc::String AJ_INSTALL_APP_PARAMS_OUT = AJPARAM_BOOL;
-
-static const qcc::String AJ_METHOD_UNINSTALL_APP = "UninstallApp";
-static const qcc::String AJ_UNINSTALL_APP_PARAMS_NAMES = "appId,userId,groupdId,status";
-static const qcc::String AJ_UNINSTALL_APP_PARAMS_IN = AJPARAM_STR + AJPARAM_STR + AJPARAM_STR;
-static const qcc::String AJ_UNINSTALL_APP_PARAMS_OUT = AJPARAM_BOOL;
-
-
 static const qcc::String GATEWAY_XML_XSD = "/opt/alljoyn/gwagent/manifest.xsd";
 static const qcc::String GATEWAY_XML_SCHEMA = "http://www.alljoyn.org/gateway/acl/sample";
-static const qcc::String GATEWAY_XML_COMMENT = qcc::String("Copyright (c) 2014, AllSeen Alliance. All rights reserved.\n") +
+static const qcc::String GATEWAY_XML_COMMENT = qcc::String("Copyright AllSeen Alliance. All rights reserved.\n") +
                                                "\n" +
                                                "   Permission to use, copy, modify, and/or distribute this software for any\n" +
                                                "   purpose with or without fee is hereby granted, provided that the above\n" +

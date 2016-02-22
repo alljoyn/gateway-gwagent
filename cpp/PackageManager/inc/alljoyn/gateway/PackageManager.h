@@ -60,8 +60,6 @@ class PackageManager {
      *                                  being installed
      * @param[in] downloadUrl           Web URL from which to download the app
      *                                  package
-     * @param[in] appPackageFileSize    File size for the entire app package,
-     *                                  including manifest data
      * @param[in] unixUserId            Unix user Id to be used when installing
      *                                  or upgrading the app.  Set to a new
      *                                  unique user Id for new app installs.
@@ -76,7 +74,6 @@ class PackageManager {
                     const String& packageName,
                     const String& appVersion,
                     const String& downloadUrl,
-                    uint64_t appPackageFileSize,
                     bool upgradeFlag,
                     const String& unixUserId,
                     QStatus& responseStatus);

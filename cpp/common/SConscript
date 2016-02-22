@@ -1,4 +1,5 @@
-# Copyright (c) 2014, AllSeen Alliance. All rights reserved.
+#******************************************************************************
+# Copyright (c) 2013-2014, AllSeen Alliance. All rights reserved.
 #
 #    Permission to use, copy, modify, and/or distribute this software for any
 #    purpose with or without fee is hereby granted, provided that the above
@@ -11,19 +12,24 @@
 #    WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 #    ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 #    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+#*****************************************************************************
 
 Import('gateway_env')
-import os
 
-gateway_env['PM_DISTDIR'] = gateway_env['DISTDIR'] + '/packageManager'
+gwcommon_env = gateway_env.Clone()
 
-gateway_env.Append(LIBPATH = '$PM_DISTDIR/lib');
-gateway_env.Append(CPPPATH = '$PM_DISTDIR/inc');
-gateway_env.Append(LIBPATH =['/usr/lib'])
-gateway_env.Append(LIBS = ['curl'])
+gateway_env['GWCOMMON_DISTDIR'] = gateway_env['DISTDIR'] + '/common'
 
-gateway_env.Install('$PM_DISTDIR/inc/alljoyn/gateway', gateway_env.Glob('inc/alljoyn/gateway/*.h'))
-gateway_env.Install('$PM_DISTDIR/lib', gateway_env.SConscript('src/SConscript', exports = ['gateway_env']))
+if gateway_env['BR'] == 'on':
+    gwcommon_env.Prepend(LIBS = ['ajrouter'])
 
-if gateway_env.has_key('GTEST_DIR'):
-    gateway_env.Install('$PM_DISTDIR/bin/testObjects', gateway_env.Glob('testObjects/*'))
+common_srcs = gwcommon_env.Glob('*.cc')
+
+common_libs = []
+
+# Static library
+common_objs = gwcommon_env.Object(common_srcs)
+common_libs.append(gwcommon_env.StaticLibrary('alljoyn_gwcommon', common_objs))
+
+gateway_env.Install('$GWCOMMON_DISTDIR/inc/alljoyn/gateway/common', gwcommon_env.Glob('*.h'))
+gateway_env.Install('$GWCOMMON_DISTDIR/lib/', common_libs)

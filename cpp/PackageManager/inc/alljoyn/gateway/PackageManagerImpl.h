@@ -46,7 +46,6 @@ class PackageManagerImpl {
                     const String& packageName,
                     const String& appVersion,
                     const String& downloadUrl,
-                    uint64_t appPackageFileSize,
                     bool upgradeFlag,
                     const String& unixUserId,
                     QStatus& responseStatus);

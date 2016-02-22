@@ -62,11 +62,12 @@ void PackageManagerImpl::InstallApp(
     const String& package_name,
     const String& appVersion,
     const String& downloadUrl,
-    uint64_t appPackageFileSize,
     bool upgradeFlag,
     const String& unixUserId,
     QStatus& responseStatus)
 {
+    QCC_UNUSED(appId);
+    QCC_UNUSED(appVersion);
     packageName = package_name;
     responseStatus = pmUtils.InitTempDir(appId);
     if (ER_OK != responseStatus) {
