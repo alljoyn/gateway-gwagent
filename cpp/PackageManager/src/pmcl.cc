@@ -168,7 +168,7 @@ int main(int argc, char* argv[])
             cout << "incorrect number of arguments\n";
             responseStatus = ER_BAD_ARG_COUNT;
         } else {
-            mgr.InstallApp(appId, packageName, version, url, size, upgrade, uid, responseStatus);
+            mgr.InstallApp(url, upgrade, responseStatus);
         }
 
     } else if (uninstall) {
