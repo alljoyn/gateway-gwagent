@@ -29,24 +29,16 @@ PackageManager::~PackageManager() {
     }
 }
 
-void PackageManager::InstallApp(
-    const String& appId,
-    const String& packageName,
-    const String& appVersion,
+qcc::String PackageManager::InstallApp(
     const String& downloadUrl,
-    uint64_t appPackageFileSize,
+    const String& fileHash,
     bool upgradeFlag,
-    const String& unixUserId,
     QStatus& responseStatus) {
 
-    pmImpl->InstallApp(appId,
-                       packageName,
-                       appVersion,
-                       downloadUrl,
-                       appPackageFileSize,
-                       upgradeFlag,
-                       unixUserId,
-                       responseStatus);
+    return pmImpl->InstallApp(downloadUrl,
+                              fileHash,
+                              upgradeFlag,
+                              responseStatus);
 }
 
 void PackageManager::UninstallApp(

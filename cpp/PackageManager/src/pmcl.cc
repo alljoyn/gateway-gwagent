@@ -38,6 +38,7 @@ const string Usage()
     usage << "[install | -uninstall | -upgrade]\n";
     usage << "-version\n";
     usage << "-url\n";
+    usage << "-hash\n";
     usage << "-size\n";
     usage << "-uid\n";
     usage << "-help\n";
@@ -52,6 +53,7 @@ const int UPGRADE =    'u';
 const int UNINSTALL =  'r';
 const int VERSION =    'v';
 const int URL =        'l';
+const int HASH=        'x';
 const int SIZE =       's';
 const int UID =        'd';
 const int HELP =       'h';
@@ -65,6 +67,7 @@ static struct option long_options[] = {
     { "uninstall",  no_argument,        0,  UNINSTALL },
     { "version",    required_argument,  0,  VERSION   },
     { "url",        required_argument,  0,  URL       },
+    { "url",        required_argument,  0,  HASH      },
     { "size",       required_argument,  0,  SIZE      },
     { "uid",        required_argument,  0,  UID       },
     { "help",       no_argument,        0,  HELP      },
@@ -83,6 +86,7 @@ int main(int argc, char* argv[])
     String packageName;
     String version;
     String url;
+    String fileHash;
     unsigned int size(0);
     String uid;
     String fileUrl;
@@ -138,6 +142,11 @@ int main(int argc, char* argv[])
             url = optarg;
             break;
 
+        case HASH:
+            cout << "hash: " << optarg << endl;
+            fileHash = optarg;
+            break;
+
         case SIZE:
             size = stoul(optarg);
             cout << "size: " << size << endl;
@@ -168,7 +177,7 @@ int main(int argc, char* argv[])
             cout << "incorrect number of arguments\n";
             responseStatus = ER_BAD_ARG_COUNT;
         } else {
-            mgr.InstallApp(appId, packageName, version, url, size, upgrade, uid, responseStatus);
+            mgr.InstallApp(url, fileHash, upgrade, responseStatus);
         }
 
     } else if (uninstall) {

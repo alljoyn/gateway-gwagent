@@ -19,6 +19,7 @@
 #include <alljoyn/gateway/GatewayMgmt.h>
 #include <alljoyn/gateway/GatewayRouterPolicyManager.h>
 #include "busObjects/AppMgmtBusObject.h"
+#include "busObjects/PkgManagerBusObject.h"
 #include "GatewayConstants.h"
 #include <dirent.h>
 
@@ -62,6 +63,23 @@ QStatus GatewayConnectorAppManager::init(BusAttachment* bus)
     }
 
     status = bus->RegisterBusObject(*m_AppMgmtBusObject);
+    if (status != ER_OK) {
+        QCC_LogError(status, ("Could not register GatewayConnectorAppMgmt BusObject"));
+        return status;
+    }
+
+    if (m_PkgManagerBusObject) {
+        QCC_DbgPrintf(("Objects already registered. Ignoring request"));
+        return ER_OK;
+    }
+
+    m_PkgManagerBusObject = new PkgManagerBusObject(bus, &status);
+    if (status != ER_OK) {
+        QCC_LogError(status, ("Could not create PkgManagerBusObject BusObject"));
+        return status;
+    }
+
+    status = bus->RegisterBusObject(*m_PkgManagerBusObject);
     if (status != ER_OK) {
         QCC_LogError(status, ("Could not register GatewayConnectorAppMgmt BusObject"));
         return status;

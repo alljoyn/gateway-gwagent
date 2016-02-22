@@ -31,8 +31,14 @@ using namespace std;
 namespace ajn {
 namespace gw {
 
-PackageVerifier::PackageVerifier(const String& dataFilePath, const String& PackageSignaturePath, const String& publicKeyfilePath) :
-    datafile(dataFilePath), signatureFile(PackageSignaturePath), publicKeyfile(publicKeyfilePath)
+PackageVerifier::PackageVerifier(const String& dataFilePath,
+                                 const String& PackageSignaturePath,
+                                 const String& publicKeyfilePath,
+                                 const String& packageFileHash) :
+    m_dataFile(dataFilePath),
+    m_signatureFile(PackageSignaturePath),
+    m_publicKeyFile(publicKeyfilePath),
+    m_packageFileHash(packageFileHash)
 {
 }
 
@@ -50,7 +56,7 @@ QStatus PackageVerifier::VerifyPackage()
         return result;
     }
 
-    result = hash.ImportPublicPem(publicKeyfile);
+    result = hash.ImportPublicPem(m_publicKeyFile);
     if (result != ER_OK) {
         QCC_LogError(result, ("PackageVerifier could not import public key"));
         return result;
@@ -59,6 +65,11 @@ QStatus PackageVerifier::VerifyPackage()
     result = hash.RsaVerify(&sig_buffer[0], sig_buffer.size());
     if (result != ER_OK) {
         QCC_LogError(result, ("PackageVerifier RsaVerify failed"));
+    }
+
+    result = hash.CompareDigests(m_packageFileHash.c_str());
+    if (result != ER_OK) {
+        QCC_LogError(result, ("PackageVerifier hashes dit not match"));
     }
 
     return result;
@@ -71,9 +82,9 @@ QStatus PackageVerifier::ReadSignatureFile()
 {
     // open the corresponding signature file that was downloaded with the target object
     ifstream sigfile;
-    sigfile.open(signatureFile.c_str(), ios::in | ios::binary | ios::ate);
+    sigfile.open(m_signatureFile.c_str(), ios::in | ios::binary | ios::ate);
     if (sigfile.bad()) {
-        QCC_LogError(ER_OPEN_FAILED, ("unable to open signature file: %s", signatureFile.c_str()));
+        QCC_LogError(ER_OPEN_FAILED, ("unable to open signature file: %s", m_signatureFile.c_str()));
         return ER_OPEN_FAILED;
     }
 
@@ -90,9 +101,9 @@ QStatus PackageVerifier::ReadDataFile()
     // read target file in chunks and run them through our hash object
     QStatus result = ER_FAIL;
     ifstream data;
-    data.open(datafile.c_str(), ios::in | ios::binary | ios::ate);
+    data.open(m_dataFile.c_str(), ios::in | ios::binary | ios::ate);
     if (data.bad()) {
-        QCC_LogError(ER_OPEN_FAILED, ("unable to open data file: %s", datafile.c_str()));
+        QCC_LogError(ER_OPEN_FAILED, ("unable to open data file: %s", m_dataFile.c_str()));
         return ER_OPEN_FAILED;
     }
     unsigned char* databuffer = 0;

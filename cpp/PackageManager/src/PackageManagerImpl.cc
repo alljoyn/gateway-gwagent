@@ -37,6 +37,9 @@
 #include <sstream>
 #include <sys/types.h>
 #include <dirent.h>
+#include <libxml/parser.h>
+#include <libxml/tree.h>
+#include <libxml/xmlwriter.h>
 
 namespace ajn {
 namespace gw {
@@ -57,31 +60,79 @@ PackageManagerImpl::~PackageManagerImpl()
 {
 }
 
-void PackageManagerImpl::InstallApp(
-    const String& appId,
-    const String& package_name,
-    const String& appVersion,
+qcc::String PackageManagerImpl::InstallApp(
     const String& downloadUrl,
-    uint64_t appPackageFileSize,
+    const String& fileHash,
     bool upgradeFlag,
-    const String& unixUserId,
     QStatus& responseStatus)
 {
-    packageName = package_name;
-    responseStatus = pmUtils.InitTempDir(appId);
+    responseStatus = pmUtils.InitTempDir("alljoyn.pkgmanager.");
     if (ER_OK != responseStatus) {
         QCC_LogError(responseStatus,
-                     ("Unable create temporary directory for : %s ", package_name.c_str()));
-        return;
+                     ("Unable create temporary directory for package installation"));
+        return "";
     }
 
-    String downloadLocation = pmUtils.getTempDirName() + "/" + packageName;
+    String downloadLocation = pmUtils.getTempDirName() + "/pkg.tar";
     responseStatus = DownloadFile(downloadUrl, downloadLocation, false);  //Last argument is ignored in non-debug builds
 
     if (ER_OK != responseStatus) {
         QCC_LogError(responseStatus,
                      ("Unable to download package: %s  ", downloadLocation.c_str()));
-        return;
+        return "";
+    }
+
+    responseStatus = VerifyAppPackage("pkg.tar", fileHash, VERIFICATION_CERTIFICATE_LOCATION);
+    if (ER_OK != responseStatus) {
+        QCC_LogError(responseStatus, ("Unable to verify package download: %s  ", packageName.c_str()));
+        return "";
+    }
+
+    responseStatus = pmUtils.ExtractInnerTarToDir("pkg.tar", pmUtils.getTempDirName() + "/pkg");
+    if (ER_OK != responseStatus) {
+        QCC_LogError(responseStatus, ("Unable to extract AJ package"));
+        return "";
+    }
+    qcc::String manifestFilePath = pmUtils.getTempDirName() + "/pkg/Manifest.xml";
+    std::ifstream ifs(manifestFilePath.c_str());
+    if (!ifs) {
+        QCC_LogError(ER_READ_ERROR, ("Unable to find package Manifest file."));
+        return "";
+
+    }
+    std::string content((std::istreambuf_iterator<char>(ifs)),
+            (std::istreambuf_iterator<char>()));
+    ifs.close();
+
+    if (content.empty()) {
+        QCC_LogError(ER_READ_ERROR, ("Unable to read package Manifest file."));
+        return "";
+    }
+    
+    xmlDocPtr doc = xmlParseMemory(content.c_str(), content.size());
+    if (doc == NULL) {
+        QCC_LogError(ER_OS_ERROR, ("Could not parse XML from memory"));
+        xmlFreeDoc(doc);
+        xmlCleanupParser();
+        return "";
+    }
+
+    xmlNode* root_element = xmlDocGetRootElement(doc);
+
+    qcc::String appId;
+
+    for(xmlNode* currentKey = root_element->children; currentKey != NULL; currentKey = currentKey->next) {
+
+        if (currentKey->type != XML_ELEMENT_NODE || currentKey->children == NULL) {
+            continue;
+        }
+
+        const xmlChar* keyName = currentKey->name;
+        const xmlChar* value = currentKey->children->content;
+
+        if (xmlStrEqual(keyName, (const xmlChar*)"connectorId")) {
+            appId.assign((const char*) value);
+        }
     }
 
     if (upgradeFlag) {
@@ -91,26 +142,19 @@ void PackageManagerImpl::InstallApp(
         if (ER_OK != responseStatus) {
             QCC_LogError(responseStatus,
                          ("Unable to remove package at: %s prior to update", appDir.c_str()));
-            return;
+            return "";
         }
     } else {   //TODO: if PM is  not required create the application's user then this code should be deleted
                //create user appId
         stringstream usercmdss;
-        usercmdss <<  "useradd -u " <<  unixUserId << " -g " << APP_GROUP_ID << " " << appId.c_str();  //fails if user already exists
+        usercmdss <<  "useradd -u " <<  appId << " -g " << APP_GROUP_ID << " " << appId.c_str();  //fails if user already exists
         responseStatus = pmUtils.ExecuteCmdLine(usercmdss.str().c_str());
     }
 
     if (ER_OK != responseStatus) {
         QCC_LogError(responseStatus, ("Unable to add package for : %s ", appId.c_str()));
-        return;
+        return "";
     }
-
-    responseStatus = VerifyAppPackage(packageName, VERIFICATION_CERTIFICATE_LOCATION);
-    if (ER_OK != responseStatus) {
-        QCC_LogError(responseStatus, ("Unable to verify package download: %s  ", packageName.c_str()));
-        return;
-    }
-
 
     //todo: the temp mgr now contains the inner tar, so complete the installation by expanding that into the target folder
     vector<String> filenames;
@@ -122,14 +166,7 @@ void PackageManagerImpl::InstallApp(
     responseStatus = pmUtils.CreateDir(mkdir);
     if (ER_OK != responseStatus) {
         QCC_LogError(responseStatus, ("Unable to create AJ package directory: %s", mkdir.c_str()));
-        return;
-    }
-
-    responseStatus = pmUtils.ExtractInnerTarToDir(packageName, GATEWAY_APPS_DIRECTORY + "/" + appId);
-
-    if (ER_OK != responseStatus) {
-        QCC_LogError(responseStatus, ("Unable to extract AJ package"));
-        return;
+        return "";
     }
 
     // set ownership of this app
@@ -150,7 +187,7 @@ void PackageManagerImpl::InstallApp(
         QCC_LogError(responseStatus, ("Install attempt failed"));
     }
 
-    return;
+    return appId;
 }
 
 void PackageManagerImpl::UninstallApp(
@@ -185,6 +222,7 @@ QStatus PackageManagerImpl::DownloadFile(
 
 QStatus PackageManagerImpl::VerifyAppPackage(
     const String& fileName,
+    const String& fileHash,
     const String& localSigningPublicKeyPath)
 {
 
@@ -194,7 +232,7 @@ QStatus PackageManagerImpl::VerifyAppPackage(
         return result;
     }
 
-    PackageVerifier verifier(pmUtils.getInnerTarPath(), pmUtils.getHashFilePath(), localSigningPublicKeyPath);
+    PackageVerifier verifier(pmUtils.getInnerTarPath(), pmUtils.getHashFilePath(), localSigningPublicKeyPath, fileHash);
 
     result = verifier.VerifyPackage();
 

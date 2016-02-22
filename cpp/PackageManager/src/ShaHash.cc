@@ -90,6 +90,11 @@ QStatus ShaHash::ComputeDigest()
     return result;
 }
 
+QStatus ShaHash::CompareDigests(const char* digest)
+{
+    return strcmp(digest, (char*)md_value) != 0 ? ER_FAIL : ER_OK;
+}
+
 //pemfilepath should be the public key of same certificate used to by the sender to create the signature file of the downloaded object
 QStatus ShaHash::ImportPublicPem(const String& pemfilepath)
 {

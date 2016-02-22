@@ -42,13 +42,9 @@ class PackageManagerImpl {
 
     virtual ~PackageManagerImpl();
 
-    void InstallApp(const String& appId,
-                    const String& packageName,
-                    const String& appVersion,
-                    const String& downloadUrl,
-                    uint64_t appPackageFileSize,
+    qcc::String InstallApp(const String& downloadUrl,
+                    const String& fileHash,
                     bool upgradeFlag,
-                    const String& unixUserId,
                     QStatus& responseStatus);
 
     void UninstallApp(const String& appId,  //TODO: if PM is required to delete the application user then the user id is required here
@@ -59,6 +55,7 @@ class PackageManagerImpl {
                          bool sslVerify = true);
 
     QStatus VerifyAppPackage(const String& fileName,
+                             const String& fielHash,
                              const String& publicKeyLocation);
 
   private:

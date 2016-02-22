@@ -44,7 +44,10 @@ class PackageVerifier {
      * @param [in] - PackageSignaturePath - The cryptologic signature hash downloaded as part of the AJ package
      * @param [in] - publicKeyfilePath - Path to the public key of the signing certificate that was used to generate the AJ package signature
      */
-    PackageVerifier(const String& dataFilePath, const String& PackageSignaturePath, const String& publicKeyfilePath);
+    PackageVerifier(const String& dataFilePath,
+                    const String& PackageSignaturePath,
+                    const String& publicKeyfilePath,
+                    const String& packageFileHash);
 
     /**
      * Using the OpenSsl api, computes a crypo has of the data file and verifies that this hash with the preinstalled public signing key.
@@ -56,11 +59,12 @@ class PackageVerifier {
   private:
     QStatus ReadDataFile();
     QStatus ReadSignatureFile();
-    String datafile;
-    String signatureFile;
-    String publicKeyfile;
+    String m_dataFile;
+    String m_signatureFile;
+    String m_publicKeyFile;
+    String m_packageFileHash;
     ShaHash hash;
-    uint8_t digest[ShaHash::SHA1_SIZE];
+    uint8_t digest[ShaHash::SHA256_SIZE];
     std::vector<unsigned char> sig_buffer;
 };
 

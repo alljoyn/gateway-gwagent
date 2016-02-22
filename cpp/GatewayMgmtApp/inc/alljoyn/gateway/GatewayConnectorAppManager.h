@@ -26,6 +26,7 @@ namespace gw {
 
 //forward declarations
 class AppMgmtBusObject;
+class PkgManagerBusObject;
 class GatewayConnectorApp;
 
 /**
@@ -82,6 +83,11 @@ class GatewayConnectorAppManager {
      * BusObject used for AppMgmt
      */
     AppMgmtBusObject* m_AppMgmtBusObject;
+
+    /**
+     * BusObject used for PkgManager 
+     */
+    PkgManagerBusObject* m_PkgManagerBusObject;
 
     /**
      * The map storing the Apps

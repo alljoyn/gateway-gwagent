@@ -17,6 +17,8 @@ Import('gateway_env')
 gateway_env['GWMA_DISTDIR'] = gateway_env['DISTDIR'] + '/gatewayMgmtApp'
 
 gateway_env.Append(LIBPATH = '$GWMA_DISTDIR/lib');
+gateway_env.Append(LIBPATH = '$DISTDIR/common/lib');
+gateway_env.Append(LIBPATH = '$DISTDIR/packageManager/lib');
 gateway_env.Append(CPPPATH = '$GWMA_DISTDIR/inc');
 
 gateway_env.Install('$GWMA_DISTDIR/inc/alljoyn/gateway', gateway_env.Glob('inc/alljoyn/gateway/*.h'))
