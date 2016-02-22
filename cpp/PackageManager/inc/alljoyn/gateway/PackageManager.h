@@ -72,13 +72,8 @@ class PackageManager {
      *                                  app
      */
 
-    void InstallApp(const String& appId,
-                    const String& packageName,
-                    const String& appVersion,
-                    const String& downloadUrl,
-                    uint64_t appPackageFileSize,
+    void InstallApp(const String& downloadUrl,
                     bool upgradeFlag,
-                    const String& unixUserId,
                     QStatus& responseStatus);
 
     /**

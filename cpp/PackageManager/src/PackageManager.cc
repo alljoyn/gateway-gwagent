@@ -30,22 +30,12 @@ PackageManager::~PackageManager() {
 }
 
 void PackageManager::InstallApp(
-    const String& appId,
-    const String& packageName,
-    const String& appVersion,
     const String& downloadUrl,
-    uint64_t appPackageFileSize,
     bool upgradeFlag,
-    const String& unixUserId,
     QStatus& responseStatus) {
 
-    pmImpl->InstallApp(appId,
-                       packageName,
-                       appVersion,
-                       downloadUrl,
-                       appPackageFileSize,
+    pmImpl->InstallApp(downloadUrl,
                        upgradeFlag,
-                       unixUserId,
                        responseStatus);
 }
 
