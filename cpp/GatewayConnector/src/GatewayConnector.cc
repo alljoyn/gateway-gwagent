@@ -16,7 +16,7 @@
 
 #include "alljoyn/gateway/GatewayConnector.h"
 #include <algorithm>
-#include <regex>
+#include <regex.h>
 #include "../../GatewayMgmtApp/src/GatewayConstants.h"
 
 #define GW_CONNECTOR_IFC_NAME "org.alljoyn.gwagent.connector.App"
@@ -41,7 +41,18 @@ GatewayConnector::~GatewayConnector()
 QStatus GatewayConnector::init()
 {
     QStatus status = ER_OK;
-    if (std::regex_match(m_AppName.c_str(), std::regex("[a-z_][a-z0-9_-]*"))) {
+    regex_t reg;
+
+    if (regcomp(&reg, "^[a-z_][a-z0-9_-]*", REG_NOSUB) != 0) {
+        status = ER_FAIL;
+        QCC_LogError(status, ("Could not compile regex object"));
+        return status;
+    }
+
+    int reg_status = regexec(&reg, m_AppName.c_str(), 0, NULL, 0);
+    regfree(&reg);
+
+    if ( reg_status != REG_NOMATCH) {
         std::string tmpWKN = m_AppName.c_str();
 
         tmpWKN.erase(std::remove(tmpWKN.begin(), tmpWKN.end(), '-'), tmpWKN.end());
@@ -50,7 +61,7 @@ QStatus GatewayConnector::init()
 
     } else {
         status = ER_FAIL;
-        QCC_LogError(status, ("Connector App Name has an invalid format. Name must match regex [a-z_][a-z0-9_-]*"));
+        QCC_LogError(status, ("Connector App Name has an invalid format. Name must match regex ^[a-z_][a-z0-9_-]*"));
 
         return status;
     }
