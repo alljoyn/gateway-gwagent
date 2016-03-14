@@ -77,7 +77,8 @@ esac
 # build the code
 
 pushd ${GWAGENT_SRC_DIR}
-scons V=1 OS=linux CPU=${CPU} BINDINGS=cpp BR=off VARIANT=${BUILD_VARIANT} WS=detail POLICYDB=on
+scons V=1 OS=linux CPU=${CPU} BINDINGS=cpp BR=off VARIANT=${BUILD_VARIANT} WS=off POLICYDB=on
+
 popd
 
 
