@@ -11,10 +11,10 @@ namespace gw {
 using namespace ajn;
 
 GatewayMgmtAppConfigListener::GatewayMgmtAppConfigListener(
-        common::SrpKeyXListener* keyListener,
-        BusAttachment* bus,
-        GatewayBusListener* busListener,
-        GatewayMgmtAppConfig* gatewayConfig) :
+    common::SrpKeyXListener* keyListener,
+    BusAttachment* bus,
+    GatewayBusListener* busListener,
+    GatewayMgmtAppConfig* gatewayConfig) :
     m_KeyListener(keyListener),
     m_Bus(bus),
     m_BusListener(busListener),
@@ -42,11 +42,11 @@ QStatus GatewayMgmtAppConfigListener::Restart()
 }
 
 QStatus GatewayMgmtAppConfigListener::SetPassphrase(
-                const char *daemonRealm,
-                size_t passcodeSize,
-                const char *passcode,
-                SessionId sessionId
-                )
+    const char*daemonRealm,
+    size_t passcodeSize,
+    const char*passcode,
+    SessionId sessionId
+    )
 {
     QCC_UNUSED(daemonRealm);
     qcc::String passCodeStr(passcode, passcodeSize);

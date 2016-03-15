@@ -103,7 +103,7 @@ class GatewayMgmtAppConfig {
 
     /**
      * Get the AllJoynPasscode for the Gateway Management App
-     * @return the AllJoynPasscode 
+     * @return the AllJoynPasscode
      */
     const qcc::String& getAlljoynPasscode() const;
 

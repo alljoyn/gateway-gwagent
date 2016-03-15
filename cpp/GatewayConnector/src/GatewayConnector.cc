@@ -52,7 +52,7 @@ QStatus GatewayConnector::init()
     int reg_status = regexec(&reg, m_AppName.c_str(), 0, NULL, 0);
     regfree(&reg);
 
-    if ( reg_status != REG_NOMATCH) {
+    if (reg_status != REG_NOMATCH) {
         std::string tmpWKN = m_AppName.c_str();
 
         tmpWKN.erase(std::remove(tmpWKN.begin(), tmpWKN.end(), '-'), tmpWKN.end());

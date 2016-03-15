@@ -42,7 +42,7 @@ using namespace ajn::gw;
 using namespace ajn::gw::common;
 using namespace std;
 
-#define CHECK_RETURN(x) if ((status = x) != ER_OK) {return status;}
+#define CHECK_RETURN(x) if ((status = x) != ER_OK) { return status; }
 
 class ExitManager {
   public:
