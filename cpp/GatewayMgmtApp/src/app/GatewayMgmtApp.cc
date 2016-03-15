@@ -300,12 +300,12 @@ start:
         return 1;
     }
 
-    GatewayMgmtAppConfigListener configServiceListener( 
-            keyListener,
-            bus,
-            busListener,
-            appConfig
-            );
+    GatewayMgmtAppConfigListener configServiceListener(
+        keyListener,
+        bus,
+        busListener,
+        appConfig
+        );
 
     GatewayMgmtAppDataStore configDataStore(NULL, NULL);
 
