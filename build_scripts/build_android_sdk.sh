@@ -110,6 +110,9 @@ then
     mkdir -p $configSdkContent
     unzip ${DEPENDENCIES_DIR}/$configSdkNameMatch.zip -d $configSdkContent
     cp $configSdkContent/alljoyn-android/services/alljoyn-config-*-rel/samples/ConfigClientSample/libs/alljoyn_apps_android_utils.jar $jarsDepends/
+    
+    # get alljoyn_config.jar from config SDK
+    cp $configSdkContent/alljoyn-android/services/alljoyn-config-*-rel/java/libs/alljoyn_config.jar $jarsDepends/
 
     # get alljoyn jars/so from the AllJoyn SDK
     coreSdkNameMatch=alljoyn-[^a-z]*-android-sdk-${variantString}
