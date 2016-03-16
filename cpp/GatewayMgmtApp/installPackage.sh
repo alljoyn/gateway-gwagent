@@ -70,7 +70,7 @@ if [ -d "$tmpDir" ]; then
     echo "$tmpDir directory already exists. Should not have happened"; exit 6; 
 fi
 
-mkdir "$tmpDir" || exit 7
+mkdir -p "$tmpDir" || exit 7
 
 tar -xzf $tarFile -C $tmpDir
 
@@ -106,14 +106,14 @@ mkdir -p "$pkgInstallDir/store" || exit 17
 
 cp -rf $tmpDir/bin/* $pkgInstallDir/bin || exit 19
 ls $tmpDir/lib/* &> /dev/null
-if [ $? == 0 ]; then
+if [ $? -eq 0 ]; then
     cp -rf $tmpDir/lib/* $pkgInstallDir/lib || exit 20
 fi
 cp $tmpDir/Manifest.xml $pkgInstallDir/ || exit 21
 
 # allow package to be installed for an existing user (for testing purposes)
-id -u "$connectorId" &> /dev/null
-if [ $? != 0 ]; then
+id -u "$connectorId" 2> /dev/null
+if [ $? -ne 0 ]; then
     useradd $connectorId || exit 22
     createdUser=1
 fi
