@@ -100,6 +100,7 @@ distDir=${GWAGENT_SRC_DIR}/build/linux/${CPU}/${BUILD_VARIANT}/dist
 # copy gateway agent files
 cp $distDir/gatewayMgmtApp/bin/alljoyn-gwagent $sdkStaging/usr/bin
 cp $distDir/gatewayMgmtApp/bin/manifest.xsd $sdkStaging/gwagent
+cp $distDir/gatewayMgmtApp/bin/gwApp-config.xml $sdkStaging/gwagent
 cp $distDir/cpp/lib/liballjoyn_about.so $sdkStaging/usr/lib
 cp $distDir/gatewayMgmtApp/bin/gwagent-config.xml $sdkStaging/etc/alljoyn/gwagent/gwagent.conf
 
@@ -115,6 +116,12 @@ chmod a+rx $sdkStaging/daemon/alljoyn-daemon
 # copy sample routing node config.xml to daemon directory
 cp ${GWAGENT_SRC_DIR}/cpp/GatewayMgmtApp/samples/config.xml $sdkStaging/etc/alljoyn/alljoyn.conf
 chmod a+rx $sdkStaging/usr/bin/*
+
+# copy init.d scripts to initd folder
+cp -r ${GWAGENT_SRC_DIR}/cpp/initd $sdkStaging/
+
+# copy example acl all.acl to apps folder
+cp ${GWAGENT_SRC_DIR}/cpp/GatewayMgmtApp/all.acl $sdkStaging/apps/
 
 # copy other base services so files needed by the sample connector
 cp $distDir/services_common/lib/liballjoyn_services_common.so $sdkStaging/usr/lib
