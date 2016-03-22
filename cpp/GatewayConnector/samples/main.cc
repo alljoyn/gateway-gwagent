@@ -14,32 +14,35 @@
  *    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  ******************************************************************************/
 
-#include <SrpKeyXListener.h>
-#include <CommonSampleUtil.h>
+#include <alljoyn/gateway/common/AJInitializer.h>
+#include <alljoyn/gateway/common/SrpKeyXListener.h>
 #include <alljoyn/BusAttachment.h>
 #include <alljoyn/Init.h>
-#include <alljoyn/notification/Notification.h>
+#include <alljoyn/AboutProxy.h>
+#include <alljoyn/AboutIcon.h>
+#include <alljoyn/AboutIconProxy.h>
 #include <alljoyn/notification/NotificationReceiver.h>
 #include <alljoyn/notification/NotificationService.h>
 #include "alljoyn/gateway/GatewayConnector.h"
-#include <alljoyn/about/AboutServiceApi.h>
 #include <alljoyn/PasswordManager.h>
-#include <alljoyn/about/AnnounceHandler.h>
-#include <alljoyn/about/AnnouncementRegistrar.h>
 #include <alljoyn/config/ConfigClient.h>
 #include <alljoyn/services_common/GuidUtil.h>
+#include <alljoyn/AboutObj.h>
 
 #include <iomanip>
 #include <iostream>
 #include <unistd.h>
 #include <signal.h>
 #include <set>
+#include <algorithm>
 
 using namespace ajn;
 using namespace ajn::services;
 using namespace ajn::gw;
+using namespace ajn::gw::common;
 using namespace std;
 
+#define CHECK_RETURN(x) if ((status = x) != ER_OK) { return status; }
 
 class ExitManager {
   public:
@@ -70,6 +73,75 @@ class ExitManager {
 ExitManager exitManager;
 
 
+class CommonBusListener : public ajn::BusListener, public ajn::SessionPortListener, public ajn::SessionListener {
+  public:
+    CommonBusListener(ajn::BusAttachment* bus = NULL, void(*daemonDisconnectCB)() = NULL) : BusListener(), SessionPortListener(), m_SessionPort(0), m_Bus(bus), m_DaemonDisconnectCB(daemonDisconnectCB)
+    {
+    }
+
+    ~CommonBusListener()
+    {
+    }
+
+    bool AcceptSessionJoiner(ajn::SessionPort sessionPort, const char* joiner, const ajn::SessionOpts& opts)
+    {
+        QCC_UNUSED(joiner);
+        QCC_UNUSED(opts);
+        if (sessionPort != m_SessionPort) {
+            return false;
+        }
+
+        std::cout << "Accepting JoinSessionRequest" << std::endl;
+        return true;
+    }
+    void setSessionPort(ajn::SessionPort sessionPort)
+    {
+        m_SessionPort = sessionPort;
+    }
+    void SessionJoined(ajn::SessionPort sessionPort, ajn::SessionId id, const char* joiner)
+    {
+        QCC_UNUSED(sessionPort);
+        QCC_UNUSED(joiner);
+        std::cout << "Session has been joined successfully" << std::endl;
+        if (m_Bus) {
+            m_Bus->SetSessionListener(id, this);
+        }
+        m_SessionIds.push_back(id);
+    }
+    void SessionLost(ajn::SessionId sessionId, SessionLostReason reason)
+    {
+        QCC_UNUSED(reason);
+        std::cout << "Session has been lost" << std::endl;
+        std::vector<SessionId>::iterator it = std::find(m_SessionIds.begin(), m_SessionIds.end(), sessionId);
+        if (it != m_SessionIds.end()) {
+            m_SessionIds.erase(it);
+        }
+    }
+    ajn::SessionPort getSessionPort()
+    {
+        return m_SessionPort;
+    }
+    const std::vector<ajn::SessionId>& getSessionIds() const
+    {
+        return m_SessionIds;
+    }
+    void BusDisconnected()
+    {
+        std::cout << "Bus has been disconnected" << std::endl;
+        if (m_DaemonDisconnectCB) {
+            m_DaemonDisconnectCB();
+        }
+    }
+
+  private:
+    ajn::SessionPort m_SessionPort;
+    ajn::BusAttachment* m_Bus;
+    std::vector<ajn::SessionId> m_SessionIds;
+    void (*m_DaemonDisconnectCB)();
+
+};
+
+
 class ConfigSession : public BusAttachment::JoinSessionAsyncCB, public SessionListener {
   private:
     BusAttachment* bus;
@@ -77,42 +149,53 @@ class ConfigSession : public BusAttachment::JoinSessionAsyncCB, public SessionLi
     {
         // Private to force use of the ctor with BusAttachment* parameter
     }
-    void PrintAboutData(AboutClient::AboutData& aboutData)
+    void PrintAboutData(AboutData aboutData)
     {
-        for (AboutClient::AboutData::iterator itx = aboutData.begin(); itx != aboutData.end(); ++itx) {
-            qcc::String key = itx->first;
-            ajn::MsgArg value = itx->second;
-            if (value.typeId == ALLJOYN_STRING) {
-                std::cout << "Key name=" << key.c_str() << " value=" << value.v_string.str << std::endl;
-            } else if (value.typeId == ALLJOYN_ARRAY && value.Signature().compare("as") == 0) {
-                std::cout << "Key name=" << key.c_str() << " values: ";
-                const MsgArg* stringArray;
-                size_t fieldListNumElements;
-                //QStatus status =
-                value.Get("as", &fieldListNumElements, &stringArray);
-                for (unsigned int i = 0; i < fieldListNumElements; i++) {
-                    char* tempString;
-                    stringArray[i].Get("s", &tempString);
-                    std::cout << tempString << " ";
+        size_t count = aboutData.GetFields();
+
+        const char** fields = new const char*[count];
+        aboutData.GetFields(fields, count);
+
+        for (size_t i = 0; i < count; ++i) {
+            printf("Key: %s", fields[i]);
+            cout << "Key name= " << fields[i];
+
+            MsgArg* tmp;
+            aboutData.GetField(fields[i], tmp, NULL);
+            if (tmp->Signature() == "s") {
+                const char* tmp_s;
+                tmp->Get("s", &tmp_s);
+                cout << "value= " << tmp_s << endl;
+            } else if (tmp->Signature() == "as") {
+                size_t las;
+                MsgArg* as_arg;
+                tmp->Get("as", &las, &as_arg);
+                cout << " values: ";
+                for (size_t j = 0; j < las; ++j) {
+                    const char* tmp_s;
+                    as_arg[j].Get("s", &tmp_s);
+                    cout << tmp_s << " ";
                 }
-                std::cout << std::endl;
-            } else if (value.typeId == ALLJOYN_BYTE_ARRAY) {
-                std::cout << "Key name=" << key.c_str() << " value=" << std::hex << std::uppercase << std::setfill('0');
-                uint8_t* AppIdBuffer;
-                size_t numElements;
-                value.Get("ay", &numElements, &AppIdBuffer);
-                for (size_t i = 0; i < numElements; i++) {
-                    std::cout <<  std::setw(2) << (unsigned int)AppIdBuffer[i];
+                cout << endl;
+            } else if (tmp->Signature() == "ay") {
+                size_t lay;
+                uint8_t* pay;
+                tmp->Get("ay", &lay, &pay);
+                for (size_t j = 0; j < lay; ++j) {
+                    cout << setw(2) << (unsigned int)pay[j];
                 }
-                std::cout << std::nouppercase << std::dec << std::endl;
             }
+            cout << nouppercase << dec << endl;
         }
+        delete [] fields;
     }
 
   public:
     ConfigSession(BusAttachment* busAttachment) : bus(busAttachment) { }
 
     virtual void JoinSessionCB(QStatus status, SessionId sessionId, const SessionOpts& opts, void* context) {
+        QCC_UNUSED(opts);
+
         static bool firstJoin = true;
         QStatus myStat;
 
@@ -126,50 +209,38 @@ class ConfigSession : public BusAttachment::JoinSessionAsyncCB, public SessionLi
 
                 bool isIconInterface = false;
                 bool isConfigInterface = false;
-                AboutClient aboutClient(*bus);
+                AboutProxy aboutClient(*bus, (char*)context, sessionId);
                 int ver = 0;
 
-                AboutClient::ObjectDescriptions ObjectDescriptionsRefill;
-                myStat = aboutClient.GetObjectDescriptions((char*)context, ObjectDescriptionsRefill, sessionId);
+                MsgArg objArg;
+                myStat = aboutClient.GetObjectDescription(objArg);
+                AboutObjectDescription ObjectDescriptionsRefill(objArg);
 
                 if (myStat != ER_OK) {
                     cout << "getObjectDescriptions: status=" << QCC_StatusText(myStat) << endl;
                 } else {
-                    for (AboutClient::ObjectDescriptions::const_iterator it = ObjectDescriptionsRefill.begin();
-                         it != ObjectDescriptionsRefill.end(); ++it) {
-                        qcc::String key = it->first;
-                        std::vector<qcc::String> vector = it->second;
-                        cout << "key=" << key.c_str();
-                        for (std::vector<qcc::String>::const_iterator itv = vector.begin(); itv != vector.end(); ++itv) {
-                            if (key.compare("/About/DeviceIcon") == 0 && itv->compare("org.alljoyn.Icon") == 0) {
-                                isIconInterface = true;
-                            }
-                            if (key.compare("/Config") == 0 && itv->compare("org.alljoyn.Config") == 0) {
-                                isConfigInterface = true;
-                            }
-                            cout << " value=" << itv->c_str();
-                        }
-                        cout << endl;
+                    if (ObjectDescriptionsRefill.HasInterface("/About/DeviceIcon",
+                                                              "org.alljoyn.Icon") == true) {
+                        isIconInterface = true;
+                    }
+                    if (ObjectDescriptionsRefill.HasInterface("/Config",
+                                                              "org.alljoyn.Config") == true) {
+                        isConfigInterface = true;
                     }
                 }
 
-                AboutClient::AboutData aboutDataRefill;
+                MsgArg aboutArg;
+                myStat = aboutClient.GetAboutData("en", aboutArg);
 
                 std::vector<qcc::String> supportedLanguages;
-                myStat = aboutClient.GetAboutData((char*)context, NULL, aboutDataRefill);
                 if (myStat != ER_OK) {
                     cout << "getAboutData: status="  << QCC_StatusText(myStat) << endl;
                 } else {
-                    AboutClient::AboutData::iterator search = aboutDataRefill.find("SupportedLanguages");
-                    if (search != aboutDataRefill.end()) {
-                        const MsgArg* stringArray;
-                        size_t fieldListNumElements;
-                        search->second.Get("as", &fieldListNumElements, &stringArray);
-                        for (unsigned int i = 0; i < fieldListNumElements; i++) {
-                            char* tempString;
-                            stringArray[i].Get("s", &tempString);
-                            supportedLanguages.push_back(tempString);
-                        }
+                    AboutData aboutDataRefill(aboutArg);
+                    size_t lngsNum = aboutDataRefill.GetSupportedLanguages();
+                    char** languages = new char*[lngsNum];
+                    for (size_t i = 0; i < lngsNum; i++) {
+                        supportedLanguages.push_back(languages[i]);
                     }
                 }
 
@@ -177,35 +248,30 @@ class ConfigSession : public BusAttachment::JoinSessionAsyncCB, public SessionLi
                      ++it) {
                     cout << endl << (char*)context << " AboutClient AboutData using language=" << it->c_str() << endl;
                     cout << "-----------------------------------" << endl;
-                    AboutClient::AboutData aboutDataRefill;
-                    myStat = aboutClient.GetAboutData((char*)context, it->c_str(), aboutDataRefill);
+                    MsgArg aArg;
+                    myStat = aboutClient.GetAboutData(it->c_str(), aArg);
                     if (myStat != ER_OK) {
                         cout << "getAboutData: status="  << QCC_StatusText(myStat) << endl;
                     } else {
+                        AboutData aboutDataRefill(aboutArg);
                         PrintAboutData(aboutDataRefill);
                     }
                 }
 
-                myStat = aboutClient.GetVersion((char*)context, ver, sessionId);
+                uint16_t aboutVer;
+                myStat = aboutClient.GetVersion(aboutVer);
                 if (myStat != ER_OK) {
                     cout << "getVersion: status=" << QCC_StatusText(myStat) << endl;
                 } else {
-                    cout << "Version=" << ver << endl;
+                    cout << "Version=" << aboutVer << endl;
                 }
 
                 if (isIconInterface) {
-                    AboutIconClient iconClient(*bus);
+                    AboutIconProxy iconClient(*bus, (char*) context, sessionId);
                     qcc::String url;
 
-                    myStat = iconClient.GetUrl((char*)context, url, sessionId);
-                    if (myStat != ER_OK) {
-                        cout << "getUrl: status= " << QCC_StatusText(myStat) << endl;
-                    } else {
-                        cout << "url=" << url.c_str() << endl;
-                    }
-
-                    AboutIconClient::Icon icon;
-                    myStat = iconClient.GetIcon((char*)context, icon, sessionId);
+                    AboutIcon icon;
+                    myStat = iconClient.GetIcon(icon);
 
                     if (myStat != ER_OK) {
                         cout << "GetIcon: status=" << QCC_StatusText(myStat) << endl;
@@ -223,13 +289,13 @@ class ConfigSession : public BusAttachment::JoinSessionAsyncCB, public SessionLi
                         cout << endl;
                     }
 
-                    myStat = iconClient.GetVersion((char*)context, ver, sessionId);
-                    if (myStat != ER_OK) {
-                        cout << "getVersion: status=" << QCC_StatusText(myStat) << endl;
-                    } else {
-                        cout << "Version=" << ver << endl;
-                    }
-                } // if (isIconInterface)
+                    qcc::String iconUrl = icon.url;
+                    cout << "url=" << iconUrl << endl;
+
+                    uint16_t iconVer = 0;
+                    myStat = iconClient.GetVersion(iconVer);
+                    cout << "Version=" << iconVer << endl;
+                }     // if (isIconInterface)
 
                 if (isConfigInterface) {
                     ConfigClient configClient(*bus);
@@ -246,7 +312,7 @@ class ConfigSession : public BusAttachment::JoinSessionAsyncCB, public SessionLi
                     cout << "UpdateConfigurations: status=" << QCC_StatusText(myStat) << endl;
                     usleep(3000 * 1000);
                 }
-            } //if firstJoin
+            }     //if firstJoin
             else {
                 ConfigClient configClient(*bus);
                 ConfigClient::Configurations configurations;
@@ -295,6 +361,8 @@ class ConfigAboutListener : public AboutListener {
 
     virtual void Announced(const char* busName, uint16_t version, SessionPort port,
                            const MsgArg& objectDescriptionArg, const MsgArg& aboutDataArg) {
+        QCC_UNUSED(version);
+        QCC_UNUSED(aboutDataArg);
 
         QStatus status = ER_OK;
 
@@ -367,6 +435,89 @@ void dumpObjectSpecs(list<GatewayMergedAcl::ObjectDescription>& specs, const cha
             cout << indent << "    " << "interface: " << (*innerator).c_str() << endl;
         }
     }
+}
+
+QStatus fillAboutData(AboutData* aboutdata,
+                      qcc::String const& appIdHex,
+                      qcc::String const& appName,
+                      qcc::String const& deviceId,
+                      std::map<qcc::String, qcc::String> const& deviceNames,
+                      qcc::String const& defaultLanguage = "en")
+{
+    if (!aboutdata) {
+        return ER_BAD_ARG_1;
+    }
+
+    QStatus status = ER_OK;
+
+    if (!appIdHex.empty()) {
+        CHECK_RETURN(aboutdata->SetAppId(appIdHex.c_str()));
+    }
+
+    if (deviceId != "") {
+        CHECK_RETURN(aboutdata->SetDeviceId(deviceId.c_str()))
+    }
+
+    std::vector<qcc::String> languages(3);
+    languages[0] = "en";
+    languages[1] = "es";
+    languages[2] = "fr";
+
+    for (size_t i = 0; i < languages.size(); i++) {
+        CHECK_RETURN(aboutdata->SetSupportedLanguage(languages[i].c_str()))
+    }
+
+    if (defaultLanguage != "") {
+        CHECK_RETURN(aboutdata->SetDefaultLanguage(defaultLanguage.c_str()))
+    }
+
+    if (appName != "") {
+        CHECK_RETURN(aboutdata->SetAppName(appName.c_str(), languages[0].c_str()))
+        CHECK_RETURN(aboutdata->SetAppName(appName.c_str(), languages[1].c_str()))
+        CHECK_RETURN(aboutdata->SetAppName(appName.c_str(), languages[2].c_str()))
+    }
+
+    CHECK_RETURN(aboutdata->SetModelNumber("Wxfy388i"))
+    CHECK_RETURN(aboutdata->SetDateOfManufacture("10/1/2199"))
+    CHECK_RETURN(aboutdata->SetSoftwareVersion("12.20.44 build 44454"))
+    CHECK_RETURN(aboutdata->SetHardwareVersion("355.499. b"))
+
+    std::map<qcc::String, qcc::String>::const_iterator iter = deviceNames.find(languages[0]);
+    if (iter != deviceNames.end()) {
+        CHECK_RETURN(aboutdata->SetDeviceName(iter->second.c_str(), languages[0].c_str()));
+    } else {
+        CHECK_RETURN(aboutdata->SetDeviceName("My device name", "en"));
+    }
+
+    iter = deviceNames.find(languages[1]);
+    if (iter != deviceNames.end()) {
+        CHECK_RETURN(aboutdata->SetDeviceName(iter->second.c_str(), languages[1].c_str()));
+    } else {
+        CHECK_RETURN(aboutdata->SetDeviceName("Mi nombre de dispositivo", "es"));
+    }
+
+    iter = deviceNames.find(languages[2]);
+    if (iter != deviceNames.end()) {
+        CHECK_RETURN(aboutdata->SetDeviceName(iter->second.c_str(), languages[2].c_str()));
+    } else {
+        CHECK_RETURN(aboutdata->SetDeviceName("Mon nom de l'appareil", "fr"));
+    }
+
+    CHECK_RETURN(aboutdata->SetDescription("This is an Alljoyn Application", "en"))
+    CHECK_RETURN(aboutdata->SetDescription("Esta es una Alljoyn aplicacion", "es"))
+    CHECK_RETURN(aboutdata->SetDescription("C'est une Alljoyn application", "fr"))
+
+    CHECK_RETURN(aboutdata->SetManufacturer("Company", "en"))
+    CHECK_RETURN(aboutdata->SetManufacturer("Empresa", "es"))
+    CHECK_RETURN(aboutdata->SetManufacturer("Entreprise", "fr"))
+
+    CHECK_RETURN(aboutdata->SetSupportUrl("http://www.alljoyn.org"))
+
+    if (!aboutdata->IsValid()) {
+        printf("failed to setup about data.\n");
+        return ER_FAIL;
+    }
+    return status;
 }
 
 void dumpAcl(GatewayMergedAcl* p) {
@@ -448,10 +599,15 @@ class MyReceiver : public NotificationReceiver {
 };
 
 
-int main(int argc, char** argv) {
-    if (AllJoynInit() != ER_OK) {
+int CDECL_CALL main(int argc, char** argv) {
+    QCC_UNUSED(argc);
+    QCC_UNUSED(argv);
+
+    AJInitializer ajInit;
+    if (ajInit.Status() != ER_OK) {
         return 1;
     }
+
     signal(SIGINT, signal_callback_handler);
     BusAttachment bus("ConnectorApp", true);
     CommonBusListener busListener;
@@ -460,7 +616,7 @@ int main(int argc, char** argv) {
     //====================================
     // Initialize bus
     //====================================
-#ifdef QCC_USING_BD
+#ifdef ROUTER
     PasswordManager::SetCredentials("ALLJOYN_SRP_LOGON", "000000");
 #endif
 
@@ -490,7 +646,7 @@ int main(int argc, char** argv) {
     //====================================
     keyListener.setPassCode("000000");
     qcc::String keystore = "/opt/alljoyn/apps/" + wellknownName + "/store/.alljoyn_keystore.ks";
-    status = bus.EnablePeerSecurity("ALLJOYN_SRP_KEYX ALLJOYN_SRP_LOGON ALLJOYN_ECDHE_PSK", &keyListener, keystore.c_str(), false);
+    status = bus.EnablePeerSecurity("ALLJOYN_SRP_KEYX ALLJOYN_ECDHE_PSK", &keyListener, keystore.c_str(), false);
 
     //====================================
     // Initialize GwConnector interface
@@ -524,20 +680,26 @@ int main(int argc, char** argv) {
     GuidUtil::GetInstance()->GenerateGUID(&appid);
 
     AboutData aboutData("en");
-    AboutObj aboutObj(bus);
-    DeviceNamesType deviceNames;
+    std::map<qcc::String, qcc::String> deviceNames;
     deviceNames.insert(pair<qcc::String, qcc::String>("en", "ConnectorSampleDevice"));
-    status = CommonSampleUtil::fillAboutData(&aboutData, appid, "ConnectorSample", deviceid, deviceNames);
+    status = fillAboutData(&aboutData, appid, "ConnectorSample", deviceid, deviceNames);
     if (status != ER_OK) {
         cout << "Could not fill AboutData. " <<  QCC_StatusText(status) << endl;
         return 1;
     }
-    status = CommonSampleUtil::prepareAboutService(&bus, &aboutData, &aboutObj, &busListener, 900);
+
+    busListener.setSessionPort(900);
+    bus.RegisterBusListener(busListener);
+
+    TransportMask transportMask = TRANSPORT_ANY;
+    SessionPort sp = 900;
+    SessionOpts opts(SessionOpts::TRAFFIC_MESSAGES, false, SessionOpts::PROXIMITY_ANY, transportMask);
+
+    status = bus.BindSessionPort(sp, opts, busListener);
     if (status != ER_OK) {
-        cout << "Could not set up the AboutService." << endl;
-        notificationService->shutdown();
-        return 1;
+        return status;
     }
+
     NotificationSender* notificationSender = notificationService->initSend(&bus, &aboutData);
     if (!notificationSender) {
         cout << "Could not initialize Sender" << endl;
@@ -614,6 +776,6 @@ int main(int argc, char** argv) {
 
     notificationService->shutdownSender();
     notificationService->shutdown();
-    AllJoynShutdown();
+
     return exitManager.getSignum();
 }

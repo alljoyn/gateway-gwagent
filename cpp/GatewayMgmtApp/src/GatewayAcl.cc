@@ -156,12 +156,23 @@ AclResponseCode GatewayAcl::updateAclStatus(AclStatus aclStatus)
         if (!success) {
             QCC_DbgHLPrintf(("Could not start the app"));
         }
+        status = m_ConnectorApp->getAppBusObject()->CheckAppPresence();
+        if (status != ER_OK) {
+            success = false;
+            QCC_DbgHLPrintf(("Could not start the app"));
+        }
     } else if (operationalStatus == GW_OS_RUNNING && !m_ConnectorApp->hasActiveAcl()) {
         pthread_t thread;
         bool success = m_ConnectorApp->shutdownConnectorApp(&thread);
         if (!success) {
             QCC_DbgHLPrintf(("Could not stop the app"));
         }
+    }
+
+    status = m_ConnectorApp->updatePolicyManager();
+    if (status != ER_OK) {
+        QCC_DbgPrintf(("Could not update Policies for app %s", m_ConnectorApp->getConnectorId().c_str()));
+        return GW_ACL_RC_POLICYMANAGER_ERROR;
     }
 
     status = m_ConnectorApp->getAppBusObject()->SendAclUpdatedSignal();
@@ -556,7 +567,7 @@ QStatus GatewayAcl::writeToFile()
     if (rc < 0) {
         goto exit;
     }
-    rc = xmlSaveFormatFile((GATEWAY_APPS_DIRECTORY + "/" + m_ConnectorApp->getConnectorId() + "/acls/" + m_AclId).c_str(), doc, 1);
+    rc = xmlSaveFormatFile((GATEWAY_APPS_DIRECTORY + "/" + m_ConnectorApp->getAppName() + "/acls/" + m_AclId).c_str(), doc, 1);
     if (rc < 0) {
         status = ER_WRITE_ERROR;
         goto exit;

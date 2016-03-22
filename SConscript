@@ -38,6 +38,8 @@ if 'java' in env['bindings'] and not env.has_key('_ALLJOYN_JAVA_') and os.path.e
 
 gateway_env = env.Clone()
 
+gateway_env.Append(CCFLAGS=["-Wno-error"])
+
 for b in gateway_env['bindings']:
     if os.path.exists('%s/SConscript' % b):
         gateway_env.VariantDir('$OBJDIR/%s' % b, b, duplicate = 0)

@@ -82,7 +82,10 @@ class GatewayConnector : public MessageReceiver {
      * @param unmarshalStatus - status of unmarshalling ( success/failure)
      * @param response - the response of the call
      */
-    virtual void receiveGetMergedAclAsync(QStatus unmarshalStatus, GatewayMergedAcl* response) { }
+    virtual void receiveGetMergedAclAsync(QStatus unmarshalStatus, GatewayMergedAcl* response) {
+        QCC_UNUSED(unmarshalStatus);
+        QCC_UNUSED(response);
+    }
 
     /**
      * Handler for the mergedAcl signal
@@ -130,6 +133,12 @@ class GatewayConnector : public MessageReceiver {
      * The busAttachment to use
      */
     BusAttachment* m_Bus;
+
+    /**
+     * The appName of the Connector App
+     */
+    qcc::String m_AppName;
+
 
     /**
      * The objectPath of the busObject

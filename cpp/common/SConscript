@@ -1,3 +1,4 @@
+#******************************************************************************
 # Copyright (c) 2013-2014, AllSeen Alliance. All rights reserved.
 #
 #    Permission to use, copy, modify, and/or distribute this software for any
@@ -11,21 +12,24 @@
 #    WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 #    ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 #    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+#*****************************************************************************
 
 Import('gateway_env')
- 
-if not gateway_env.has_key('_ALLJOYNCORE_'):
-    gateway_env.Append(LIBS = ['alljoyn'])
-    if gateway_env['OS'] == 'openwrt':
-        gateway_env.AppendUnique(LIBS = [ 'stdc++', 'pthread' ])
-    if gateway_env['OS'] == 'linux':
-        gateway_env.AppendUnique(LIBS = [ 'pthread' ])
 
-gateway_dirs = [
-    'common',
-    'GatewayMgmtApp',
-    'GatewayConnector',
-    'GatewayController'
-]
+gwcommon_env = gateway_env.Clone()
 
-result = [ gateway_env.SConscript('%s/SConscript' % gatewaydir, exports = ['gateway_env']) for gatewaydir in gateway_dirs ]
+gateway_env['GWCOMMON_DISTDIR'] = gateway_env['DISTDIR'] + '/common'
+
+if gateway_env['BR'] == 'on':
+    gwcommon_env.Prepend(LIBS = ['ajrouter'])
+
+common_srcs = gwcommon_env.Glob('*.cc')
+
+common_libs = []
+
+# Static library
+common_objs = gwcommon_env.Object(common_srcs)
+common_libs.append(gwcommon_env.StaticLibrary('alljoyn_gwcommon', common_objs))
+
+gateway_env.Install('$GWCOMMON_DISTDIR/inc/alljoyn/gateway/common', gwcommon_env.Glob('*.h'))
+gateway_env.Install('$GWCOMMON_DISTDIR/lib/', common_libs)

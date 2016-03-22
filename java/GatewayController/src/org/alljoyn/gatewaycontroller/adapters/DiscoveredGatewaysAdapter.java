@@ -23,6 +23,7 @@ import org.alljoyn.gatewaycontroller.R;
 import android.content.Context;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 /**
@@ -58,22 +59,28 @@ public class DiscoveredGatewaysAdapter extends VisualArrayAdapter {
     public View getView(int position, View convertView, ViewGroup parent) {
 
         View row = convertView;
-        TextView gatewayItem;
 
         if (row == null) {
-
-            row         = inflater.inflate(viewItemResId, parent, false);
-            gatewayItem = (TextView) row.findViewById(R.id.discoveredGatewayItem);
-            row.setTag(gatewayItem);
-        } else {
-
-            gatewayItem = (TextView) row.getTag();
+            row = inflater.inflate(viewItemResId, parent, false);
         }
 
+        TextView gatewayItem = (TextView) row.findViewById(R.id.discoveredGatewayItem);
+        
         final VisualGateway vg = (VisualGateway) getItem(position);
         gatewayItem.setText(vg.getGateway().getAppName());
+        
+        ImageView imageView = (ImageView) row.findViewById(R.id.discoveredGatewayLocked);
+        
+        imageView.setVisibility(vg.isAuthenticated ? View.GONE : View.VISIBLE);
+       
 
         return row;
+    }
+    
+    @Override
+    public boolean isEnabled(int position) {
+        VisualGateway vg = (VisualGateway) getItem(position);
+        return vg.isAuthenticated;
     }
 
 }

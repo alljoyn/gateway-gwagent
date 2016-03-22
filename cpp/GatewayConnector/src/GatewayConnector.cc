@@ -15,6 +15,10 @@
  ******************************************************************************/
 
 #include "alljoyn/gateway/GatewayConnector.h"
+#include <algorithm>
+#include <regex.h>
+#include "../../GatewayMgmtApp/src/GatewayConstants.h"
+
 #define GW_CONNECTOR_IFC_NAME "org.alljoyn.gwagent.connector.App"
 #define GW_CONNECTOR_SIG_MATCH "type='signal',interface='org.alljoyn.gwagent.connector.App'"
 #define GW_MGMNT_APP_WKN "org.alljoyn.GWAgent.GMApp"
@@ -23,12 +27,10 @@ using namespace ajn::gw;
 using namespace ajn;
 
 GatewayConnector::GatewayConnector(BusAttachment* bus, qcc::String const& appName) :
-    m_Bus(bus), m_ObjectPath("/gw/"),
+    m_Bus(bus), m_AppName(appName), m_ObjectPath("/gw/"),
     m_WellKnownName("org.alljoyn.GWAgent.Connector."),
     m_RemoteAppAccess(NULL)
 {
-    m_ObjectPath.append(appName);
-    m_WellKnownName.append(appName);
 }
 
 GatewayConnector::~GatewayConnector()
@@ -39,6 +41,32 @@ GatewayConnector::~GatewayConnector()
 QStatus GatewayConnector::init()
 {
     QStatus status = ER_OK;
+    regex_t reg;
+
+    if (regcomp(&reg, "^[a-z_][a-z0-9_-]*", REG_NOSUB) != 0) {
+        status = ER_FAIL;
+        QCC_LogError(status, ("Could not compile regex object"));
+        return status;
+    }
+
+    int reg_status = regexec(&reg, m_AppName.c_str(), 0, NULL, 0);
+    regfree(&reg);
+
+    if (reg_status != REG_NOMATCH) {
+        std::string tmpWKN = m_AppName.c_str();
+
+        tmpWKN.erase(std::remove(tmpWKN.begin(), tmpWKN.end(), '-'), tmpWKN.end());
+        m_ObjectPath.append(tmpWKN.c_str());
+        m_WellKnownName.append(tmpWKN.c_str());
+
+    } else {
+        status = ER_FAIL;
+        QCC_LogError(status, ("Connector App Name has an invalid format. Name must match regex ^[a-z_][a-z0-9_-]*"));
+
+        return status;
+    }
+
+    m_RemoteAppAccess = new ProxyBusObject(*m_Bus, GW_MGMNT_APP_WKN, m_ObjectPath.c_str(), 0);
 
     const InterfaceDescription* ifc = initInterface(status);
     if (ER_OK != status) {
@@ -58,12 +86,6 @@ QStatus GatewayConnector::init()
     }
 
     status = m_Bus->AddMatch(GW_CONNECTOR_SIG_MATCH);
-    if (ER_OK != status) {
-        return status;
-    }
-
-    m_RemoteAppAccess = new ProxyBusObject(*m_Bus, GW_MGMNT_APP_WKN, m_ObjectPath.c_str(), 0);
-    status = m_RemoteAppAccess->AddInterface(*ifc);
     if (ER_OK != status) {
         return status;
     }
@@ -98,12 +120,12 @@ const InterfaceDescription* GatewayConnector::initInterface(QStatus& status)
         return NULL;
     }
 
-    status = ifc->AddSignal("MergedAclUpdated", NULL, NULL);
+    status = ifc->AddSignal("MergedAclUpdated", NULL, NULL, 0);
     if (ER_OK != status) {
         return NULL;
     }
 
-    status = ifc->AddSignal("ShutdownApp", NULL, NULL);
+    status = ifc->AddSignal("ShutdownApp", NULL, NULL, 0);
     if (ER_OK != status) {
         return NULL;
     }
@@ -137,11 +159,19 @@ QStatus GatewayConnector::updateConnectionStatus(ConnectionStatus connStatus)
 
 void GatewayConnector::mergedAclUpdatedSignalHandler(const InterfaceDescription::Member* member, const char* sourcePath, Message& msg)
 {
+    QCC_UNUSED(member);
+    QCC_UNUSED(sourcePath);
+    QCC_UNUSED(msg);
+
     mergedAclUpdated();
 }
 
 void GatewayConnector::shutdownSignalHandler(const InterfaceDescription::Member* member, const char* sourcePath, Message& msg)
 {
+    QCC_UNUSED(member);
+    QCC_UNUSED(sourcePath);
+    QCC_UNUSED(msg);
+
     shutdown();
 }
 

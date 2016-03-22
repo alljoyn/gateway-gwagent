@@ -17,6 +17,7 @@
 #ifndef APPBUSOBJECT_H_
 #define APPBUSOBJECT_H_
 
+#include <qcc/Timer.h>
 #include <alljoyn/BusAttachment.h>
 #include <alljoyn/BusObject.h>
 #include <alljoyn/InterfaceDescription.h>
@@ -25,6 +26,30 @@
 
 namespace ajn {
 namespace gw {
+
+/**
+ * TimeoutAlarmListener - AlarmListener implementation for use as a timeout
+ */
+
+class TimeoutAlarmListener : public qcc::AlarmListener {
+  public:
+    TimeoutAlarmListener() : AlarmListener(), m_timedout(false) { };
+
+    bool IsTimedout()
+    {
+        return m_timedout;
+    }
+
+  private:
+    virtual void AlarmTriggered(const qcc::Alarm& alarm, QStatus reason)
+    {
+        QCC_UNUSED(alarm);
+        QCC_UNUSED(reason);
+        m_timedout = true;
+    }
+
+    bool m_timedout;
+};
 
 /**
  * AppBusObject - BusObject for ConnectorApp
@@ -108,6 +133,12 @@ class AppBusObject : public BusObject  {
      */
     void ListAcls(const InterfaceDescription::Member* member, Message& msg);
 
+    /*
+     * Check for presence of the Connector App
+     * @return status - success/failure
+     */
+    QStatus CheckAppPresence();
+
     /**
      * Send a signal that the Acls were updated
      * @return status - success/failure
@@ -170,6 +201,12 @@ class AppBusObject : public BusObject  {
      * Used to send the App shutdown signal
      */
     const ajn::InterfaceDescription::Member* m_ShutdownApp;
+
+    /**
+     * Used to ensure that BusObject is registered before making and method or
+     * signal calls.
+     */
+    bool m_isRegistered;
 
     /**
      * Private function to create the App Interface

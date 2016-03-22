@@ -13,7 +13,6 @@
  *    ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  *    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  ******************************************************************************/
-#include <signal.h>
 #include <alljoyn/PasswordManager.h>
 #include <alljoyn/AboutData.h>
 #include <alljoyn/AboutObj.h>
@@ -21,9 +20,15 @@
 #include <alljoyn/Init.h>
 #include <alljoyn/gateway/GatewayMgmt.h>
 #include <alljoyn/gateway/GatewayBusListener.h>
+#include <alljoyn/gateway/common/AJInitializer.h>
+#include <alljoyn/gateway/common/SrpKeyXListener.h>
+#include <alljoyn/services_common/GuidUtil.h>
+#include <string.h>
+#include <signal.h>
+#include <fstream>
+
 #include "../GatewayConstants.h"
-#include "SrpKeyXListener.h"
-#include "GuidUtil.h"
+#include "GatewayMgmtAppConfigListener.h"
 
 using namespace ajn;
 using namespace gw;
@@ -35,7 +40,8 @@ GatewayMgmt* gatewayMgmt = NULL;
 BusAttachment* bus = NULL;
 AboutData* aboutData = NULL;
 GatewayBusListener*  busListener = NULL;
-SrpKeyXListener* keyListener = NULL;
+common::SrpKeyXListener* keyListener = NULL;
+GatewayMgmtAppConfig* appConfig = NULL;
 static volatile sig_atomic_t s_interrupt = false;
 static volatile sig_atomic_t s_restart = false;
 
@@ -95,6 +101,8 @@ QStatus prepareBusListener()
 
 QStatus fillAboutData()
 {
+    using namespace gwConsts;
+
     if (!aboutData) {
         return ER_BAD_ARG_1;
     }
@@ -102,15 +110,34 @@ QStatus fillAboutData()
     QStatus status = ER_OK;
 
     qcc::String deviceId;
-    GuidUtil::GetInstance()->GetDeviceIdString(&deviceId);
+    ajn::services::GuidUtil::GetInstance()->GetDeviceIdString(&deviceId);
     qcc::String appId;
-    GuidUtil::GetInstance()->GenerateGUID(&appId);
+    std::fstream ifs(GATEWAY_APPID_FILE_PATH.c_str(), std::fstream::in);
+    if (ifs) {
+        std::string tmpStr;
+        if (ifs.peek() != std::fstream::traits_type::eof()) {
+            std::getline(ifs, tmpStr);
+            appId = tmpStr.c_str();
+        }
+    } else {
+        QCC_DbgPrintf(("AppId file does not exists. A new AppId will be created.\n"));
+        ifs.open(GATEWAY_APPID_FILE_PATH.c_str(), std::fstream::out | std::fstream::app);
+
+        ajn::services::GuidUtil::GetInstance()->GenerateGUID(&appId);
+
+        ifs << appId.c_str();
+        ifs.flush();
+    }
+
+    ifs.close();
+
+    const char* language = appConfig->getLanguage().c_str();
 
     status = aboutData->SetDeviceId(deviceId.c_str());
     if (status != ER_OK) {
         return status;
     }
-    status = aboutData->SetDeviceName("AllJoyn Gateway Agent", "en");
+    status = aboutData->SetDeviceName(appConfig->getDeviceName().c_str(), language);
     if (status != ER_OK) {
         return status;
     }
@@ -118,31 +145,31 @@ QStatus fillAboutData()
     if (status != ER_OK) {
         return status;
     }
-    status = aboutData->SetAppName("AllJoyn Gateway Configuration Manager", "en");
+    status = aboutData->SetAppName(appConfig->getAppName().c_str(), "en");
     if (status != ER_OK) {
         return status;
     }
-    status = aboutData->SetDefaultLanguage("en");
+    status = aboutData->SetDefaultLanguage(appConfig->getLanguage().c_str());
     if (status != ER_OK) {
         return status;
     }
-    status = aboutData->SetSupportUrl("http://www.allseenalliance.org");
+    status = aboutData->SetSupportUrl(language);
     if (status != ER_OK) {
         return status;
     }
-    status = aboutData->SetManufacturer("AllSeen Alliance", "en");
+    status = aboutData->SetManufacturer(appConfig->getManufacturer().c_str(), language);
     if (status != ER_OK) {
         return status;
     }
-    status = aboutData->SetModelNumber("1.0");
+    status = aboutData->SetModelNumber(appConfig->getModelNumber().c_str());
     if (status != ER_OK) {
         return status;
     }
-    status = aboutData->SetSoftwareVersion("1.0");
+    status = aboutData->SetSoftwareVersion(appConfig->getSoftwareVersion().c_str());
     if (status != ER_OK) {
         return status;
     }
-    status = aboutData->SetDescription("AllJoyn Gateway Configuration Manager Application", "en");
+    status = aboutData->SetDescription(appConfig->getDescription().c_str(), language);
     if (status != ER_OK) {
         return status;
     }
@@ -180,6 +207,10 @@ void cleanup()
         delete bus;
         bus = NULL;
     }
+    if (appConfig) {
+        delete appConfig;
+        appConfig = NULL;
+    }
 }
 
 void signal_callback_handler(int32_t signum)
@@ -193,18 +224,18 @@ void signal_callback_handler(int32_t signum)
 }
 qcc::String policyFileOption = "--gwagent-policy-file=";
 qcc::String appsPolicyDirOption = "--apps-policy-dir=";
+qcc::String routingNodeConfigFileOption = "--config-file=";
+qcc::String gwMgmtAppConfigPathOption = "--gwagent-config-file=";
 
 int main(int argc, char** argv)
 {
-    if (AllJoynInit() != ER_OK) {
+    qcc::String configPath;
+
+    common::AJInitializer ajInit;
+    if (ajInit.Status() != ER_OK) {
         return 1;
     }
-#ifdef ROUTER
-    if (AllJoynRouterInit() != ER_OK) {
-        AllJoynShutdown();
-        return 1;
-    }
-#endif
+
     // Allow CTRL+C to end application
     signal(SIGINT, signal_callback_handler);
     signal(SIGTERM, signal_callback_handler);
@@ -214,7 +245,9 @@ start:
 
     // Initialize GatewayMgmt object
     gatewayMgmt = GatewayMgmt::getInstance();
-
+    // Initialize GatewayMgmtAppConfig object
+    appConfig = new GatewayMgmtAppConfig;
+    qcc::String gwMgmtAppConfig = gwConsts::GATEWAY_DEFAULT_MGMT_APP_CONF_PATH;
     for (int i = 1; i < argc; i++) {
         qcc::String arg(argv[i]);
         if (arg.compare(0, policyFileOption.size(), policyFileOption) == 0) {
@@ -227,7 +260,13 @@ start:
             QCC_DbgPrintf(("Setting appsPolicyDir to: %s", policyDir.c_str()));
             gatewayMgmt->setAppPolicyDir(policyDir.c_str());
         }
+        if (arg.compare(0, gwMgmtAppConfigPathOption.size(), gwMgmtAppConfigPathOption) == 0) {
+            gwMgmtAppConfig = arg.substr(gwMgmtAppConfigPathOption.size());
+            QCC_DbgPrintf(("Setting gwMgmtAppConfig to: %s", gwMgmtAppConfig.c_str()));
+        }
     }
+
+    appConfig->loadFromFile(gwMgmtAppConfig);
 
     QStatus status = prepareBusAttachment();
     if (status != ER_OK) {
@@ -236,9 +275,9 @@ start:
         return 1;
     }
 
-    keyListener = new SrpKeyXListener();
-    keyListener->setPassCode("000000");
-    status = bus->EnablePeerSecurity("ALLJOYN_SRP_KEYX ALLJOYN_SRP_LOGON ALLJOYN_ECDHE_PSK", keyListener);
+    keyListener = new common::SrpKeyXListener();
+    keyListener->setPassCode(appConfig->getAlljoynPasscode());
+    status = bus->EnablePeerSecurity("ALLJOYN_SRP_KEYX ALLJOYN_ECDHE_PSK", keyListener);
     if (status != ER_OK) {
         QCC_LogError(status, ("Could not enable PeerSecurity"));
         cleanup();
@@ -257,6 +296,31 @@ start:
     status = prepareBusListener();
     if (status != ER_OK) {
         QCC_LogError(status, ("Could not set up the BusListener."));
+        cleanup();
+        return 1;
+    }
+
+    GatewayMgmtAppConfigListener configServiceListener(
+        keyListener,
+        bus,
+        busListener,
+        appConfig
+        );
+
+    GatewayMgmtAppDataStore configDataStore(NULL, NULL);
+
+    ajn::services::ConfigService configService(*bus, configDataStore, configServiceListener);
+
+    status = configService.Register();
+    if (status != ER_OK) {
+        QCC_LogError(status, ("Could not register the ConfigService"));
+        cleanup();
+        return 1;
+    }
+
+    status = bus->RegisterBusObject(configService);
+    if (status != ER_OK) {
+        QCC_LogError(status, ("Could not register the ConfigService BusObject"));
         cleanup();
         return 1;
     }
@@ -290,8 +354,8 @@ start:
         return 1;
     }
 
-    AboutObj aboutObj(*bus);
-    status = aboutObj.Announce(SERVICE_PORT, *aboutData);
+    AboutObj* aboutObj = new AboutObj(*bus);
+    status = aboutObj->Announce(SERVICE_PORT, *aboutData);
     if (status != ER_OK) {
         QCC_LogError(status, ("Could not announce."));
         cleanup();
@@ -302,11 +366,13 @@ start:
 
     WaitForSigInt();
 
+    delete aboutObj;
+
     cleanup();
     if (s_restart) {
         s_restart = false;
         goto start;
     }
-    AllJoynShutdown();
+
     return 0;
 }

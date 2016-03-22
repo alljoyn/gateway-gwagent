@@ -23,7 +23,6 @@
 #include <qcc/String.h>
 #include <alljoyn/gateway/GatewayAclRules.h>
 #include <alljoyn/gateway/GatewayMgmt.h>
-#include <alljoyn/about/AnnounceHandler.h>
 #include <libxml/tree.h>
 #include <libxml/xmlwriter.h>
 

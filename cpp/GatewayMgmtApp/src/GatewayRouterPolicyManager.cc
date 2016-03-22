@@ -16,7 +16,6 @@
 
 #include <alljoyn/AboutData.h>
 #include <alljoyn/AllJoynStd.h>
-#include <alljoyn/about/AnnouncementRegistrar.h>
 #include <alljoyn/gateway/GatewayRouterPolicyManager.h>
 #include "GatewayConstants.h"
 #include <libxml/parser.h>
@@ -24,14 +23,13 @@
 
 namespace ajn {
 namespace gw {
-using namespace services;
 using namespace qcc;
 using namespace gwConsts;
 
 static const qcc::String GATEWAY_POLICIES_DIRECTORY = "/opt/alljoyn/alljoyn-daemon.d";
 
 GatewayRouterPolicyManager::GatewayRouterPolicyManager() : m_AboutListenerRegistered(false), m_AutoCommit(false),
-    m_gatewayPolicyFile(GATEWAY_POLICIES_DIRECTORY + "/gwagent-config.xml"), m_appPolicyDirectory(GATEWAY_POLICIES_DIRECTORY + "/apps")
+    m_gatewayPolicyFile(GATEWAY_POLICIES_DIRECTORY + "/gwagent-config.conf"), m_appPolicyDirectory(GATEWAY_POLICIES_DIRECTORY + "/apps")
 {
 }
 
@@ -128,7 +126,7 @@ bool GatewayRouterPolicyManager::removeConnectorAppRules(qcc::String const& conn
 
     m_ConnectorAppRules.erase(iter);
 
-    int rc = remove((m_appPolicyDirectory + "/" + connectorId + ".xml").c_str());
+    int rc = remove((m_appPolicyDirectory + "/" + connectorId + ".conf").c_str());
     if (rc != 0) {
         QCC_DbgHLPrintf(("Could not remove app policy file successfully"));
     }
@@ -272,7 +270,7 @@ QStatus GatewayRouterPolicyManager::writeAppPolicies(std::map<qcc::String, std::
     if (rc < 0) {
         goto exit;
     }
-    rc = xmlSaveFormatFile((m_appPolicyDirectory + "/" + iter->first + ".xml").c_str(), doc, 1);
+    rc = xmlSaveFormatFile((m_appPolicyDirectory + "/" + iter->first + ".conf").c_str(), doc, 1);
     if (rc < 0) {
         status = ER_WRITE_ERROR;
         goto exit;
@@ -820,6 +818,10 @@ int GatewayRouterPolicyManager::writeRemotedApps(xmlTextWriterPtr writer, const 
 
 void GatewayRouterPolicyManager::Announced(const char* busName, uint16_t version, SessionPort port, const MsgArg& objectDescs, const MsgArg& aboutDataArg)
 {
+    QCC_UNUSED(version);
+    QCC_UNUSED(port);
+    QCC_UNUSED(objectDescs);
+
     QCC_DbgTrace(("Received Announcement from %s", busName));
 
     char* deviceId;

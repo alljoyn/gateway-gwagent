@@ -61,26 +61,16 @@ BusAttachment* GatewayController::getBusAttachment()
 }
 
 
-QStatus GatewayController::createGateway(const qcc::String& gatewayBusName, const ajn::services::AnnounceHandler::ObjectDescriptions& objectDescs, const ajn::services::AnnounceHandler::AboutData& aboutData, GatewayMgmtApp** gatewayMgmtApp)
+QStatus GatewayController::createGateway(const qcc::String& gatewayBusName, const ajn::AboutObjectDescription& objectDescs, const ajn::AboutData& aboutData, GatewayMgmtApp** gatewayMgmtApp)
 {
+    if (objectDescs.HasInterface(AJ_OBJECTPATH_PREFIX.c_str(), AJ_GATEWAYCONTROLLER_APPMGMT_INTERFACE.c_str()) == true) {
+        *gatewayMgmtApp = new GatewayMgmtApp();
+        QStatus status = (*gatewayMgmtApp)->init(gatewayBusName, aboutData);
 
-    for (ajn::services::AboutClient::ObjectDescriptions::const_iterator it = objectDescs.begin(); it != objectDescs.end(); ++it) {
-        qcc::String key = it->first;
-        std::vector<qcc::String> vector = it->second;
-        for (std::vector<qcc::String>::const_iterator itv = vector.begin(); itv != vector.end(); ++itv) {
-            if (itv->compare(AJ_GATEWAYCONTROLLER_APPMGMT_INTERFACE) == 0) {
-                if (key.compare(AJ_OBJECTPATH_PREFIX) == 0) {
-                    *gatewayMgmtApp = new GatewayMgmtApp();
-                    QStatus status = (*gatewayMgmtApp)->init(gatewayBusName, aboutData);
-
-                    if (status != ER_OK) {
-                        QCC_LogError(status, ("GatewayMgmtApp init failed"));
-                        delete gatewayMgmtApp;
-                        return status;
-                    }
-                    break;
-                }
-            }
+        if (status != ER_OK) {
+            QCC_LogError(status, ("GatewayMgmtApp init failed"));
+            delete gatewayMgmtApp;
+            return status;
         }
     }
 
