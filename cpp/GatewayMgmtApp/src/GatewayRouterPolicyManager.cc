@@ -106,7 +106,7 @@ bool GatewayRouterPolicyManager::addConnectorAppRules(String const& connectorId,
 {
     std::map<qcc::String, std::vector<GatewayAclRules> >::iterator iter;
     if ((iter = m_ConnectorAppRules.find(connectorId)) == m_ConnectorAppRules.end()) {
-        m_ConnectorAppRules.insert(std::pair<qcc::String, std::vector<GatewayAclRules> >(connectorId, rules));
+        iter = m_ConnectorAppRules.insert(std::pair<qcc::String, std::vector<GatewayAclRules> >(connectorId, rules)).first;
     } else {
         iter->second = rules;         //overwrite rules
     }
