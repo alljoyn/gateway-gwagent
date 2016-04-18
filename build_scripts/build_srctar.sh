@@ -63,7 +63,7 @@ pushd ${GWAGENT_SRC_DIR}
 git archive --prefix=alljoyn-gwagent-${versionString}src/gateway/gwagent/ HEAD^{tree} -o ${WORKING_DIR}/$outputTarFileName
 
 cd ../../core/alljoyn
-git archive --prefix=alljoyn-gwagent-${versionString}src/core/alljoyn/ HEAD^{tree} build_core -o ${WORKING_DIR}/core.tar
+git archive --prefix=alljoyn-gwagent-${versionString}src/core/alljoyn/ HEAD^{tree} -o ${WORKING_DIR}/core.tar
 
 cd ../../services/base
 git archive --prefix=alljoyn-gwagent-${versionString}src/services/base/ HEAD^{tree} sample_apps -o ${WORKING_DIR}/services.tar
