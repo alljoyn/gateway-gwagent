@@ -222,7 +222,7 @@ void GatewayConnectorAppManifest::parseObjects(xmlNode* currentKey, Capabilities
                 xmlFree(xmlInterfaceFriendly);
                 qcc::String interfaceName = (const char*)interfaceKey->children->content;
                 xmlChar*xmlSecured = xmlGetProp(interfaceKey, (const xmlChar*)"secured");
-                qcc::String secured = (const char*)xmlSecured;
+                qcc::String secured = xmlSecured ? (const char*)xmlSecured : "";
                 xmlFree(xmlSecured);
 
                 if (secured.compare("true") == 0) {
