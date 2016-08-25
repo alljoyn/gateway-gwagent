@@ -14,7 +14,7 @@
 
 import os
 
-env = SConscript('../../core/alljoyn/build_core/SConscript')
+env = SConscript('build_core/SConscript')
 
 vars = Variables()
 vars.Add('BINDINGS', 'Bindings to build (comma separated list): cpp, java', 'cpp,java')
@@ -22,15 +22,15 @@ vars.Add(PathVariable('ALLJOYN_DISTDIR',
                       'Directory containing a built AllJoyn Core dist directory.',
                       os.environ.get('ALLJOYN_DISTDIR')))
                       
+vars.Add(PathVariable('ALLJOYN_NOTIFICATION_DISTDIR',
+                      'Directory containing a built AllJoyn Notifications Service dist directory.',
+                      os.environ.get('ALLJOYN_NOTIFICATION_DISTDIR')))
+                      
 vars.Add(EnumVariable('BUILD_SERVICES_SAMPLES',
                       'Build the services samples.',
                       'off',
                       allowed_values = ['off', 'on']))
 
-vars.Add(PathVariable('APP_COMMON_DIR',
-                      'Directory containing common sample application sources.',
-                      os.environ.get('APP_COMMON_DIR','../../services/base/sample_apps')))
-					  
 vars.Add(PathVariable('LIBXML2_BASE',
                       'Directory containing libxml2 include files.',
                       os.environ.get('LIBXML2_BASE','/usr/include/libxml2')))					  
@@ -48,9 +48,13 @@ if env.get('ALLJOYN_DISTDIR'):
                            env.Dir('$ALLJOYN_DISTDIR/about/lib'),
                            env.Dir('$ALLJOYN_DISTDIR/services_common/lib') ])
 
-if env.get('APP_COMMON_DIR'):
-    # normalize APP_COMMON_DIR
-    env['APP_COMMON_DIR'] = env.Dir('$APP_COMMON_DIR')
+if env.get('ALLJOYN_NOTIFICATION_DISTDIR'):
+    # normalize ALLJOYN_NOTIFICATION_DISTDIR first
+    env['ALLJOYN_NOTIFICATION_DISTDIR'] = env.Dir('$ALLJOYN_NOTIFICATION_DISTDIR')
+    env.Append(CPPPATH = [ env.Dir('$ALLJOYN_NOTIFICATION_DISTDIR/notification/inc'),
+                           env.Dir('$ALLJOYN_NOTIFICATION_DISTDIR/services_common/inc') ])
+    env.Append(LIBPATH = [ env.Dir('$ALLJOYN_NOTIFICATION_DISTDIR/notification/lib'),
+                           env.Dir('$ALLJOYN_NOTIFICATION_DISTDIR/services_common/lib') ])
 
 env['bindings'] = set([ b.strip() for b in env['BINDINGS'].split(',') ])
 

@@ -17,7 +17,7 @@
 #ifndef APPBUSOBJECT_H_
 #define APPBUSOBJECT_H_
 
-#include <qcc/Timer.h>
+#include <alljoyn/gateway/common/Alarm.h>
 #include <alljoyn/BusAttachment.h>
 #include <alljoyn/BusObject.h>
 #include <alljoyn/InterfaceDescription.h>
@@ -31,7 +31,7 @@ namespace gw {
  * TimeoutAlarmListener - AlarmListener implementation for use as a timeout
  */
 
-class TimeoutAlarmListener : public qcc::AlarmListener {
+class TimeoutAlarmListener : public AlarmListener {
   public:
     TimeoutAlarmListener() : AlarmListener(), m_timedout(false) { };
 
@@ -41,7 +41,7 @@ class TimeoutAlarmListener : public qcc::AlarmListener {
     }
 
   private:
-    virtual void AlarmTriggered(const qcc::Alarm& alarm, QStatus reason)
+    virtual void AlarmTriggered(const Alarm& alarm, QStatus reason)
     {
         QCC_UNUSED(alarm);
         QCC_UNUSED(reason);
