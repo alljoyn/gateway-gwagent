@@ -19,11 +19,14 @@ Import('gateway_env')
 gwcommon_env = gateway_env.Clone()
 
 gateway_env['GWCOMMON_DISTDIR'] = gateway_env['DISTDIR'] + '/common'
+gwcommon_env['GWCOMMON_DISTDIR'] = gwcommon_env['DISTDIR'] + '/common'
+gwcommon_env.Append(CPPPATH = '$GWCOMMON_DISTDIR/inc');
 
 if gateway_env['BR'] == 'on':
     gwcommon_env.Prepend(LIBS = ['ajrouter'])
 
 common_srcs = gwcommon_env.Glob('*.cc')
+common_srcs += gwcommon_env.Glob('posix/*.cc')
 
 common_libs = []
 
@@ -32,4 +35,5 @@ common_objs = gwcommon_env.Object(common_srcs)
 common_libs.append(gwcommon_env.StaticLibrary('alljoyn_gwcommon', common_objs))
 
 gateway_env.Install('$GWCOMMON_DISTDIR/inc/alljoyn/gateway/common', gwcommon_env.Glob('*.h'))
+gateway_env.Install('$GWCOMMON_DISTDIR/inc/alljoyn/gateway/common/posix', gwcommon_env.Glob('posix/*.h'))
 gateway_env.Install('$GWCOMMON_DISTDIR/lib/', common_libs)

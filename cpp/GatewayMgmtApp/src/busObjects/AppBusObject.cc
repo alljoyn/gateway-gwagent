@@ -18,7 +18,8 @@
 #include "../GatewayConstants.h"
 #include "AclAdapter.h"
 #include <alljoyn/gateway/GatewayMgmt.h>
-#include <qcc/Mutex.h>
+#include <alljoyn/gateway/common/Mutex.h>
+#include <alljoyn/gateway/common/Timer.h>
 
 namespace ajn {
 namespace gw {
@@ -556,7 +557,7 @@ QStatus AppBusObject::CheckAppPresence()
     QStatus status = ER_FAIL;
 
     if (m_ConnectorApp->hasActiveAcl()) {
-        qcc::Timer pingTimer("GW_APP_PING_TIMER");
+        Timer pingTimer("GW_APP_PING_TIMER");
 
         TimeoutAlarmListener alarmListener;
         AlarmListener* al = &alarmListener;
