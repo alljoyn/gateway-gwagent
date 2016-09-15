@@ -77,7 +77,7 @@ esac
 # build the code
 
 pushd ${GWAGENT_SRC_DIR}
-scons V=1 OS=linux CPU=${CPU} BINDINGS=cpp BR=off VARIANT=${BUILD_VARIANT} WS=detail POLICYDB=on
+scons V=1 OS=linux CPU=${CPU} BINDINGS=cpp BR=off VARIANT=${BUILD_VARIANT} WS=detail POLICYDB=on BUILD_SERVICES_SAMPLES=on
 popd
 
 
@@ -93,7 +93,7 @@ mkdir -p $sdkStaging/apps
 mkdir -p $sdkStaging/app-manager
 mkdir -p $sdkStaging/gwagent
 mkdir -p $sdkStaging/daemon
-
+mkdir -p $sdkStaging/notificationSamples
 
 distDir=${GWAGENT_SRC_DIR}/build/linux/${CPU}/${BUILD_VARIANT}/dist
 
@@ -128,6 +128,9 @@ cp $distDir/services_common/lib/liballjoyn_services_common.so $sdkStaging/usr/li
 cp $distDir/notification/lib/liballjoyn_notification.so $sdkStaging/usr/lib
 cp $distDir/config/lib/liballjoyn_config.so $sdkStaging/usr/lib
 cp $distDir/gatewayConnector/lib/liballjoyn_gwconnector.so $sdkStaging/usr/lib
+
+# copy notification samples
+cp -r $distDir/notification/bin/* $sdkStaging/notificationSamples
 
 # package sample connector
 pushd $distDir/gatewayConnector/tar

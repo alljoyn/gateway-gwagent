@@ -407,6 +407,18 @@ int GatewayRouterPolicyManager::writeDefaultUserPolicies(xmlTextWriterPtr writer
     if (rc < 0) {
         return rc;
     }
+    rc = xmlTextWriterStartElement(writer, (xmlChar*)"allow");
+    if (rc < 0) {
+        return rc;
+    }
+    rc = xmlTextWriterWriteAttribute(writer, (xmlChar*)"receive_sender", (xmlChar*)GW_WELLKNOWN_NAME);
+    if (rc < 0) {
+        return rc;
+    }
+    rc = xmlTextWriterEndElement(writer);
+    if (rc < 0) {
+        return rc;
+    }
 
     //allow default Dbus interface
     rc = xmlTextWriterStartElement(writer, (xmlChar*)"allow");
